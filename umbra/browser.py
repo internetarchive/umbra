@@ -144,11 +144,12 @@ class Browser:
 
             self._behavior = None
 
-    def send_to_chrome(self, **kwargs):
+    def send_to_chrome(self, suppress_logging=False, **kwargs):
         msg_id = next(self.command_id)
         kwargs['id'] = msg_id
         msg = json.dumps(kwargs)
-        self.logger.debug('sending message to {}: {}'.format(self._websock, msg))
+        if not suppress_logging:
+            self.logger.debug('sending message to {}: {}'.format(self._websock, msg))
         self._websock.send(msg)
         return msg_id
 
@@ -241,6 +242,7 @@ class Chrome:
                 "--window-size=1100,900", "--no-default-browser-check",
                 "--disable-first-run-ui", "--no-first-run",
                 "--homepage=about:blank", "--disable-direct-npapi-requests",
+                "--disable-web-security",
                 "about:blank"]
         self.logger.info("running {}".format(chrome_args))
         self.chrome_process = subprocess.Popen(chrome_args, env=new_env, start_new_session=True)
