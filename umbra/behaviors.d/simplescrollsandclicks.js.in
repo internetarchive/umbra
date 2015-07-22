@@ -1,0 +1,103 @@
+var umbraAboveBelowOrOnScreen = function(e) {
+        var eTop = e.getBoundingClientRect().top;
+        if (eTop < window.scrollY) {
+                return -1; // above
+        } else if (eTop > window.scrollY + window.innerHeight) {
+                return 1;  // below
+        } else {
+                return 0;  // on screen
+        }
+}
+
+var umbraSimpleScrollsAndClicksBehavior = {
+        IDLE_TIMEOUT_SEC: 10,
+		FAILED_SCROLL_UP_TO_CLICK_ATTEMPTS: 50,        
+        idleSince: null,
+        alreadyClicked: {},
+		somethingLeftAboveAttempts: 0,
+		
+        intervalFunc: function() {
+        		var clickedSomething  = false;
+			    var somethingLeftBelow = false;
+			    var somethingLeftAbove = false;
+
+				var iframe = document.querySelector("${iframe_css_selector}");
+                var clickTargets = iframe ? 
+                	iframe.contentWindow.document.querySelectorAll("${click_css_selector}") : 
+                		document.querySelectorAll("${click_css_selector}");
+			
+                for (var i = 0; i < clickTargets.length; i++) {
+	    			var where = umbraAboveBelowOrOnScreen(clickTargets[i]);
+	    			
+					if (where == 0) {
+	                    var key = clickTargets[i].outerHTML + clickTargets[i].getBoundingClientRect().top;
+	                    
+	                    if (!this.alreadyClicked[key]) {
+	                            console.log("clicking on " + key);
+	                            clickTargets[i].click();
+	                            this.alreadyClicked[key] = true;
+	                            clickedSomething = true;
+	                            this.idleSince = null;
+	                            break;
+	                    }
+                    } 
+                    else if (where > 0) { 
+                            somethingLeftBelow = true;
+                    } 
+                    else if (where < 0) {
+                            somethingLeftAbove = true;
+                    }					            		
+	    		}
+
+		    	if (this.somethingLeftAboveAttempts >= this.FAILED_SCROLL_UP_TO_CLICK_ATTEMPTS) {
+					if (this.idleSince == null) {
+						this.idleSince = Date.now();
+					}
+					
+					return;
+		    	}
+	    		
+			    if (!clickedSomething) {
+			        if (somethingLeftAbove) {
+			        		this.somethingLeftAboveAttempts++;
+			                console.log("scrolling UP because everything on this screen has been clicked but we missed something above");
+			                window.scrollBy(0, -500);
+			                this.idleSince = null;
+			        } else if (somethingLeftBelow) {			        
+			                console.log("scrolling because everything on this screen has been clicked but there's more below document.body.clientHeight=" + document.body.clientHeight);
+			                window.scrollBy(0, 200);
+			                this.idleSince = null;
+			        } else if (window.scrollY + window.innerHeight < document.documentElement.scrollHeight) {
+			                console.log("scrolling because we're not to the bottom yet document.body.clientHeight=" + document.body.clientHeight);
+			                window.scrollBy(0, 200);
+			                this.idleSince = null;
+			        } else if (this.idleSince == null) {
+			                this.idleSince = Date.now();
+			        }
+			    }
+	    		
+                if (!this.idleSince) {
+                        this.idleSince = Date.now();
+                }
+        },
+
+        start: function() {
+                var that = this;
+                this.intervalId = setInterval(function(){ that.intervalFunc() }, 250);
+        },
+
+        isFinished: function() {
+                if (this.idleSince != null) {
+                        var idleTimeMs = Date.now() - this.idleSince;
+                        if (idleTimeMs / 1000 > this.IDLE_TIMEOUT_SEC) {
+                                return true;
+                        }
+                }
+                return false;
+        },
+};
+
+// Called from outside of this script.
+var umbraBehaviorFinished = function() { return umbraSimpleScrollsAndClicksBehavior.isFinished() };
+
+umbraSimpleScrollsAndClicksBehavior.start();
