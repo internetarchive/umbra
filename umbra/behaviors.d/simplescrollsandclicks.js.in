@@ -27,11 +27,13 @@ var umbraSimpleScrollsAndClicksBehavior = {
                 		document.querySelectorAll("${click_css_selector}");
 			
                 for (var i = 0; i < clickTargets.length; i++) {
+					var key = clickTargets[i].outerHTML + clickTargets[i].getBoundingClientRect().top;
+					                
+                	if (this.alreadyClicked[key]) continue;
+                
 	    			var where = umbraAboveBelowOrOnScreen(clickTargets[i]);
 	    			
 					if (where == 0) {
-	                    var key = clickTargets[i].outerHTML + clickTargets[i].getBoundingClientRect().top;
-	                    
 	                    if (!this.alreadyClicked[key]) {
 	                            console.log("clicking on " + key);
 	                            clickTargets[i].click();
