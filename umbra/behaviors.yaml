@@ -30,9 +30,9 @@ behaviors:
    request_idle_timeout_sec: 10
  - # https://webarchive.jira.com/browse/AITFIVE-451
    url_regex: '^https?://(?:www\.)?soundcloud.com/.*$'
-   click_css_selector: a[id='feature-next']
+   click_css_selector: button.sc-button-play, button.playButton
+   scroll: true
    request_idle_timeout_sec: 10
-
  - # default fallback brhavior
    url_regex: '^.*$'
    request_idle_timeout_sec: 10
