@@ -43,6 +43,10 @@ var umbraSimpleScrollsAndClicksBehavior = {
 					if (where == 0) {
 	                    if (!this.alreadyClicked[key]) {
 	                            console.log("clicking on " + key);
+	                            //do mouse over event on click target since some urls are requsted only on this event - see https://webarchive.jira.com/browse/AITFIVE-451       
+	                            var mouseOverEvent = document.createEvent('Events');
+	                            mouseOverEvent.initEvent("mouseover", true, false);
+	                            clickTargets[i].dispatchEvent(mouseOverEvent);	                            
 	                            clickTargets[i].click();
 	                            this.alreadyClicked[key] = true;
 	                            clickedSomething = true;
