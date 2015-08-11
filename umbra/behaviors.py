@@ -6,7 +6,6 @@ import os
 import re
 import logging
 import time
-import random
 import sys
 import yaml
 import string
