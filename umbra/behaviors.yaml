@@ -32,7 +32,6 @@ behaviors:
    url_regex: '^https?://(?:www\.)?soundcloud.com/.*$'
    click_css_selector: button.sc-button-play, button.playButton
    css_ad_selector: .playControlsPanel__adDisplay
-   scroll: true
    request_idle_timeout_sec: 10
  - # default fallback brhavior
    url_regex: '^.*$'
