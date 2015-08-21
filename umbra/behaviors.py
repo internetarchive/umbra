@@ -26,13 +26,16 @@ class Behavior:
             simpleclicks_js_in = os.path.sep.join(__file__.split(os.path.sep)[:-1] + ["behaviors.d"] + ["simpleclicks.js.in"])
             with open(simpleclicks_js_in) as fin:
                 simpleclicks_js_template = string.Template(fin.read())
-
+                
             for behavior in Behavior._behaviors:
                 if "behavior_js" in behavior:
                     behavior_js = os.path.sep.join(__file__.split(os.path.sep)[:-1] + ["behaviors.d"] + [behavior["behavior_js"]])
                     behavior["script"] = open(behavior_js, encoding="utf-8").read()
                 elif "click_css_selector" in behavior:
-                    behavior["script"] = simpleclicks_js_template.substitute(click_css_selector=behavior["click_css_selector"])
+                    if "iframe_css_selector" not in behavior:
+                        behavior["iframe_css_selector"] = "";
+                        
+                    behavior["script"] = simpleclicks_js_template.substitute(click_css_selector=behavior["click_css_selector"], iframe_css_selector=behavior["iframe_css_selector"])
 
         return Behavior._behaviors
 
