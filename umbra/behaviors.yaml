@@ -36,6 +36,10 @@ behaviors:
    url_regex: '^https?://(?:www\.)?soundcloud.com/.*$'
    click_css_selector: button.sc-button-play, button.playButton
    request_idle_timeout_sec: 10
+ - # https://webarchive.jira.com/browse/AITFIVE-463
+   url_regex: '^https?://(?:www\.)?christophercerrone.com/.*$'
+   click_css_selector: button.sc-button-play, button.playButton
+   request_idle_timeout_sec: 10
  - # default fallback brhavior
    url_regex: '^.*$'
    request_idle_timeout_sec: 10
