@@ -22,8 +22,7 @@ var umbraSimpleScrollsAndClicksBehavior = {
 		var iframe_css_selector = "${iframe_css_selector}";
 
 		if (!iframe_css_selector
-				|| iframe_css_selector == ""
-				|| iframe_css_selector == "${iframe_css_selector}") {
+				|| iframe_css_selector == "") {
 			iframe_css_selector = "uniq-selector-for-nothing-"
 					+ Math.floor(Math.random()
 							* (99999999 - 0 + 1))

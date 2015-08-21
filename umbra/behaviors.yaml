@@ -38,7 +38,8 @@ behaviors:
    request_idle_timeout_sec: 10
  - # https://webarchive.jira.com/browse/AITFIVE-463
    url_regex: '^https?://(?:www\.)?christophercerrone.com/.*$'
-   click_css_selector: button.sc-button-play, button.playButton
+   click_css_selector: button.playButton.medium
+   iframe_css_selector: iframe
    request_idle_timeout_sec: 10
  - # default fallback brhavior
    url_regex: '^.*$'
