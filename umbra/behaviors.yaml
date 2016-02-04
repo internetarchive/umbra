@@ -2,7 +2,10 @@
 behaviors:
  -
    url_regex: '^https?://(?:www\.)?facebook\.com/.*$'
-   behavior_js: facebook.js
+   behavior_js_template: facebook.js.template
+   -default_parameters:
+   -   parameter_username: "username"
+   -   parameter_password: "password"
    request_idle_timeout_sec: 30
  -
    url_regex: '^https?://(?:www\.)?flickr\.com/.*$'
@@ -26,23 +29,33 @@ behaviors:
    request_idle_timeout_sec: 10
  - 
    url_regex: '^https?://(?:www\.)?brooklynmuseum\.org/exhibitions/.*$'
-   click_css_selector: img.img-responsive
+   behavior_js_template: simpleclicks.js.template
+   default_parameters:
+      click_css_selector: img.img-responsive
    request_idle_timeout_sec: 10
  - # acalog https://webarchive.jira.com/browse/ARI-3775
    url_regex: '^https?://.*[?&]catoid=[^?]*$'
-   click_css_selector: a[onclick]
+   behavior_js_template: simpleclicks.js.template
+   default_parameters:
+      click_css_selector: a[onclick]
    request_idle_timeout_sec: 10
  - # https://webarchive.jira.com/browse/ARI-3956
    url_regex: '^https?://(?:www\.)?usask.ca/.*$'
-   click_css_selector: a[id='feature-next']
+   behavior_js_template: simpleclicks.js.template
+   default_parameters:
+      click_css_selector: a[id='feature-next']
    request_idle_timeout_sec: 10
  - # https://webarchive.jira.com/browse/AITFIVE-451
    url_regex: '^https?://(?:www\.)?soundcloud.com/.*$'
-   click_css_selector: button.sc-button-play, button.playButton
+   behavior_js_template: simpleclicks.js.template
+   default_parameters:
+      click_css_selector: button.sc-button-play, button.playButton
    request_idle_timeout_sec: 10
  - # https://webarchive.jira.com/browse/AITFIVE-463
    url_regex: '^https?://(?:www\.)?christophercerrone.com/.*$'
-   click_css_selector: button.playButton.medium
+   behavior_js_template: simpleclicks.js.template
+   default_parameters:
+      click_css_selector: button.playButton.medium
    request_idle_timeout_sec: 10
  - # https://webarchive.jira.com/browse/ARI-4690
    url_regex: '^https?://(?:www\.)?youtube.com/.*$'
