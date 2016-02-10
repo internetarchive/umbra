@@ -16,7 +16,7 @@ class Behavior:
     _behaviors = None
 
     @staticmethod
-    def behaviors():
+    def behaviors(template_parameters=None):
         if Behavior._behaviors is None:
             behaviors_yaml = os.path.sep.join(__file__.split(os.path.sep)[:-1] + ['behaviors.yaml'])
             with open(behaviors_yaml) as fin:
@@ -35,7 +35,8 @@ class Behavior:
                     if "default_parameters" in behavior:
                         for key, value in behavior["default_parameters"].items():
                             parameters[key]=value;
-                    #TODO load override params from message
+                    if template_parameters is not None:
+                        parameters.update(template_parameters)
                     behavior["script"] = template.safe_substitute(parameters)
 
         return Behavior._behaviors
@@ -43,14 +44,16 @@ class Behavior:
     def __init__(self, url, umbra_worker):
         self.url = url
         self.umbra_worker = umbra_worker
-
+        self.template_parameters = None
+        if umbra_worker.metadata is not None and umbra_worker.metadata["templateParameters"] is not None:
+            self.template_parameters = umbra_worker.metadata["templateParameters"]
         self.script_finished = False
         self.waiting_result_msg_ids = []
         self.active_behavior = None
         self.last_activity = time.time()
 
     def start(self):
-        for behavior in Behavior.behaviors():
+        for behavior in Behavior.behaviors(self.template_parameters):
             if re.match(behavior['url_regex'], self.url):
                 if "behavior_js" in behavior:
                     self.logger.info("using {} behavior for {}".format(behavior["behavior_js"], self.url))

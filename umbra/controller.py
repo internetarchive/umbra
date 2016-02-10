@@ -186,7 +186,7 @@ class AmqpBrowserController:
         def browse_page_sync():
             self.logger.info('browser={} client_id={} url={}'.format(browser, client_id, url))
             try:
-                browser.browse_page(url, on_request=on_request)
+                browser.browse_page(url, parent_url_metadata, on_request=on_request)
                 message.ack()
             except BrowsingException as e:
                 self.logger.warn("browsing did not complete normally, requeuing url {} - {}".format(url, e))

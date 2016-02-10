@@ -98,7 +98,7 @@ class Browser:
     def abort_browse_page(self):
         self._abort_browse_page = True
 
-    def browse_page(self, url, on_request=None):
+    def browse_page(self, url, metadata=None, on_request=None):
         """Synchronously browses a page and runs behaviors. 
 
         Raises BrowsingException if browsing the page fails in a non-critical
@@ -106,6 +106,7 @@ class Browser:
         """
         self.url = url
         self.on_request = on_request
+        self.metadata = metadata
 
         self._websock = websocket.WebSocketApp(self._websocket_url,
                 on_open=self._visit_page, on_message=self._handle_message)

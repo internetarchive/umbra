@@ -6,11 +6,14 @@ import os
 import sys
 import logging
 import umbra
+import json
 
 arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
         description='browse-url - open urls in chrome/chromium and run behaviors',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 arg_parser.add_argument('urls', metavar='URL', nargs='+', help='URL(s) to browse')
+arg_parser.add_argument('-m', '--meta-data-json', dest='metadata', default=None,
+        help='json metadata that would appear in the amqp message')
 arg_parser.add_argument('-w', '--browser-wait', dest='browser_wait', default='60',
         help='seconds to wait for browser initialization')
 arg_parser.add_argument('-e', '--executable', dest='chrome_exe', default='chromium-browser',
@@ -24,7 +27,11 @@ args = arg_parser.parse_args(args=sys.argv[1:])
 logging.basicConfig(stream=sys.stdout, level=args.log_level,
         format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
 
+metadata=None
+if args.metadata is not None:
+	metadata = json.loads(args.metadata)
 with umbra.Browser(chrome_exe=args.chrome_exe) as browser:
     for url in args.urls:
-        browser.browse_page(url)
+        browser.browse_page(url,metadata)
+
 
