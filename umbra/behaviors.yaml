@@ -3,9 +3,9 @@ behaviors:
  -
    url_regex: '^https?://(?:www\.)?facebook\.com/.*$'
    behavior_js_template: facebook.js.template
-   -default_parameters:
-   -   parameter_username: "username"
-   -   parameter_password: "password"
+   # default_parameters:
+   #    parameter_username: jdoe@example.com
+   #    parameter_password: abcd1234
    request_idle_timeout_sec: 30
  -
    url_regex: '^https?://(?:www\.)?flickr\.com/.*$'
@@ -27,7 +27,7 @@ behaviors:
    url_regex: '^https?://(?:www\.)?instagram\.com/.*$'
    behavior_js: instagram.js
    request_idle_timeout_sec: 10
- - 
+ -
    url_regex: '^https?://(?:www\.)?brooklynmuseum\.org/exhibitions/.*$'
    behavior_js_template: simpleclicks.js.template
    default_parameters:
@@ -69,8 +69,8 @@ behaviors:
    default_parameters:
       click_css_selector: button[data-more-results-bottom-button]
       click_until_hard_timeout: True
-   request_idle_timeout_sec: 10   
- - # default fallback brhavior
+   request_idle_timeout_sec: 10
+ - # default fallback behavior
    url_regex: '^.*$'
    request_idle_timeout_sec: 10
    behavior_js: default.js
