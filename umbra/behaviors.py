@@ -16,7 +16,7 @@ class Behavior:
     _behaviors = None
 
     @staticmethod
-    def behaviors(template_parameters=None):
+    def behaviors():
         if Behavior._behaviors is None:
             behaviors_yaml = os.path.sep.join(__file__.split(os.path.sep)[:-1] + ['behaviors.yaml'])
             with open(behaviors_yaml) as fin:
@@ -26,43 +26,46 @@ class Behavior:
             for behavior in Behavior._behaviors:
                 if "behavior_js" in behavior:
                     behavior_js = os.path.sep.join(__file__.split(os.path.sep)[:-1] + ["behaviors.d"] + [behavior["behavior_js"]])
-                    behavior["script"] = open(behavior_js, encoding="utf-8").read()
+                    with open(behavior_js, encoding="utf-8") as fin:
+                        behavior["script"] = fin.read()
                 elif "behavior_js_template" in behavior:
                     behavior_js_template = os.path.sep.join(__file__.split(os.path.sep)[:-1] + ["behaviors.d"] + [behavior["behavior_js_template"]])
-                    with open(behavior_js_template) as fin:
-                        template = string.Template(fin.read())
-                    parameters=dict()
-                    if "default_parameters" in behavior:
-                        for key, value in behavior["default_parameters"].items():
-                            parameters[key]=value;
-                    if template_parameters is not None:
-                        parameters.update(template_parameters)
-                    behavior["script"] = template.safe_substitute(parameters)
+                    with open(behavior_js_template, encoding="utf-8") as fin:
+                        behavior["template"] = string.Template(fin.read())
 
         return Behavior._behaviors
 
     def __init__(self, url, umbra_worker):
         self.url = url
         self.umbra_worker = umbra_worker
-        self.template_parameters = None
-        if umbra_worker.metadata is not None and umbra_worker.metadata["templateParameters"] is not None:
-            self.template_parameters = umbra_worker.metadata["templateParameters"]
         self.script_finished = False
         self.waiting_result_msg_ids = []
         self.active_behavior = None
         self.last_activity = time.time()
 
-    def start(self):
-        for behavior in Behavior.behaviors(self.template_parameters):
+    def start(self, template_parameters=None):
+        for behavior in Behavior.behaviors():
             if re.match(behavior['url_regex'], self.url):
                 if "behavior_js" in behavior:
-                    self.logger.info("using {} behavior for {}".format(behavior["behavior_js"], self.url))
+                    self.logger.info("using %s behavior for %s",
+                                     behavior["behavior_js"], self.url)
                 elif "behavior_js_template" in behavior:
-                    self.logger.info("using {} template behavior for {}".format(behavior["behavior_js_template"], self.url))
+                    parameters = dict()
+                    if "default_parameters" in behavior:
+                        parameters.update(behavior["default_parameters"])
+                    if template_parameters:
+                        parameters.update(template_parameters)
+                    behavior["script"] = behavior["template"].safe_substitute(parameters)
+
+                    self.logger.info(
+                            "using template=%s populated with parameters=%s for %s",
+                            repr(behavior["behavior_js_template"]),
+                            parameters, self.url)
 
                 self.active_behavior = behavior
-                self.umbra_worker.send_to_chrome(method="Runtime.evaluate",
-                        suppress_logging=True, params={"expression": behavior["script"]})
+                self.umbra_worker.send_to_chrome(
+                        method="Runtime.evaluate", suppress_logging=True,
+                        params={"expression": behavior["script"]})
                 self.notify_of_activity()
                 return
 
