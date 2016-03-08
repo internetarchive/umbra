@@ -18,6 +18,7 @@ class AmqpBrowserController:
       {
         "clientId": "umbra.client.123",
         "url": "http://example.com/my_fancy_page",
+        "behaviorParameters": {"some":"parameter","another":"thing"},
         "metadata": {"arbitrary":"fields", "etc":4}
       }
 
@@ -27,6 +28,8 @@ class AmqpBrowserController:
     as the amqp routing key, to direct information via amqp back to the client.
     It sends this information on the same specified amqp exchange (default:
     "umbra").
+
+    "behaviorParameters" are used to populate the javascript behavior template.
 
     Each url requested in the browser is published to amqp this way. The
     outgoing amqp message is a json object:
@@ -100,15 +103,20 @@ class AmqpBrowserController:
 
                 def callback(body, message):
                     try:
-                        client_id, url, metadata = body['clientId'], body['url'], body['metadata']
+                        client_id = body.get('clientId')
+                        url = body['url']
+                        metadata = body.get('metadata')
+                        behavior_parameters = body.get('behaviorParameters')
                     except:
-                        self.logger.error("unable to decipher message {}".format(message), exc_info=True)
+                        self.logger.error("unable to decipher message %s",
+                                          message, exc_info=True)
                         self.logger.error("discarding bad message")
                         message.reject()
                         browser.stop()
                         self._browser_pool.release(browser)
                         return
-                    self._start_browsing_page(browser, message, client_id, url, metadata)
+                    self._start_browsing_page(browser, message, client_id, url,
+                                              metadata, behavior_parameters)
 
                 consumer.callbacks = [callback]
 
@@ -173,20 +181,46 @@ class AmqpBrowserController:
                 time.sleep(0.5)
                 self.logger.error("attempting to reopen amqp connection")
 
-    def _start_browsing_page(self, browser, message, client_id, url, parent_url_metadata):
-        def on_request(chrome_msg):
-            payload = chrome_msg['params']['request']
-            payload['parentUrl'] = url
-            payload['parentUrlMetadata'] = parent_url_metadata
-            self.logger.debug('sending to amqp exchange={} routing_key={} payload={}'.format(self.exchange_name, client_id, payload))
+    def _start_browsing_page(self, browser, message, client_id, url, parent_url_metadata, behavior_parameters):
+        def on_response(chrome_msg):
+            if (chrome_msg['params']['response']['url'].lower().startswith('data:')
+                    or chrome_msg['params']['response']['fromDiskCache']
+                    or not 'requestHeaders' in chrome_msg['params']['response']):
+                return
+
+            payload = {
+                'url': chrome_msg['params']['response']['url'],
+                'headers': chrome_msg['params']['response']['requestHeaders'],
+                'parentUrl': url,
+                'parentUrlMetadata': parent_url_metadata,
+            }
+
+            if ':method' in chrome_msg['params']['response']['requestHeaders']:
+                # happens when http transaction is http 2.0
+                payload['method'] = chrome_msg['params']['response']['requestHeaders'][':method']
+            elif 'requestHeadersText' in chrome_msg['params']['response']:
+                req = chrome_msg['params']['response']['requestHeadersText']
+                payload['method'] = req[:req.index(' ')]
+            else:
+                self.logger.warn('unable to identify http method (assuming GET) chrome_msg=%s',
+                                 chrome_msg)
+                payload['method'] = 'GET'
+
+            self.logger.debug(
+                    'sending to amqp exchange=%s routing_key=%s payload=%s',
+                    self.exchange_name, client_id, payload)
             with self._producer_lock:
-                publish = self._producer_conn.ensure(self._producer, self._producer.publish)
+                publish = self._producer_conn.ensure(self._producer,
+                                                     self._producer.publish)
                 publish(payload, exchange=self._exchange, routing_key=client_id)
 
         def browse_page_sync():
-            self.logger.info('browser={} client_id={} url={}'.format(browser, client_id, url))
+            self.logger.info(
+                    'browser=%s client_id=%s url=%s behavior_parameters=%s',
+                    browser, client_id, url, behavior_parameters)
             try:
-                browser.browse_page(url, on_request=on_request)
+                browser.browse_page(url, on_response=on_response,
+                                    behavior_parameters=behavior_parameters)
                 message.ack()
             except BrowsingException as e:
                 self.logger.warn("browsing did not complete normally, requeuing url {} - {}".format(url, e))
