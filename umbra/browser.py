@@ -98,14 +98,16 @@ class Browser:
     def abort_browse_page(self):
         self._abort_browse_page = True
 
-    def browse_page(self, url, on_request=None):
-        """Synchronously browses a page and runs behaviors. 
+    def browse_page(self, url, on_request=None, on_response=None, behavior_parameters=None):
+        """Synchronously browses a page and runs behaviors.
 
         Raises BrowsingException if browsing the page fails in a non-critical
         way.
         """
         self.url = url
         self.on_request = on_request
+        self.on_response = on_response
+        self.behavior_parameters = behavior_parameters
 
         self._websock = websocket.WebSocketApp(self._websocket_url,
                 on_open=self._visit_page, on_message=self._handle_message)
@@ -170,24 +172,29 @@ class Browser:
         # navigate to the page!
         self.send_to_chrome(method="Page.navigate", params={"url": self.url})
 
-    def _handle_message(self, websock, message):
+    def _handle_message(self, websock, json_message):
         # self.logger.debug("message from {} - {}".format(websock.url, message[:95]))
         # self.logger.debug("message from {} - {}".format(websock.url, message))
-        message = json.loads(message)
+        message = json.loads(json_message)
         if "method" in message and message["method"] == "Network.requestWillBeSent":
+            self.logger.debug("%s %s", message["method"], json_message)
             if self._behavior:
                 self._behavior.notify_of_activity()
-            if message["params"]["request"]["url"].lower().startswith("data:"):
-                self.logger.debug("ignoring data url {}".format(message["params"]["request"]["url"][:80]))
-            elif self.on_request:
+            if self.on_request:
                 self.on_request(message)
+        elif "method" in message and message["method"] == "Network.responseReceived":
+            self.logger.debug("%s %s", message["method"], json_message)
+            if self.on_response:
+                self.on_response(message)
         elif "method" in message and message["method"] == "Page.loadEventFired":
             if self._behavior is None:
-                self.logger.info("Page.loadEventFired, starting behaviors url={} message={}".format(self.url, message))
+                self.logger.info("Page.loadEventFired, starting behaviors url=%s message=%s",
+                                 self.url, json_message)
                 self._behavior = Behavior(self.url, self)
-                self._behavior.start()
+                self._behavior.start(self.behavior_parameters)
             else:
-                self.logger.warn("Page.loadEventFired again, perhaps original url had a meta refresh, or behaviors accidentally navigated to another page? starting behaviors again url={} message={}".format(self.url, message))
+                self.logger.warn("Page.loadEventFired again, perhaps original url had a meta refresh, or behaviors accidentally navigated to another page? starting behaviors again url=%s message=%s",
+                                 self.url, json_message)
                 self._behavior = Behavior(self.url, self)
                 self._behavior.start()
         elif "method" in message and message["method"] == "Console.messageAdded":
@@ -198,7 +205,7 @@ class Browser:
             # We hit the breakpoint set in visit_page. Get rid of google
             # analytics script!
 
-            self.logger.debug("debugger paused! message={}".format(message))
+            self.logger.debug("debugger paused! message=%s", json_message)
             scriptId = message['params']['callFrames'][0]['location']['scriptId']
 
             # replace script
@@ -212,9 +219,9 @@ class Browser:
         # elif "method" in message and message["method"] in ("Network.dataReceived", "Network.responseReceived", "Network.loadingFinished"):
         #     pass
         # elif "method" in message:
-        #     self.logger.debug("{} {}".format(message["method"], message))
+        #     self.logger.debug("{} {}".format(message["method"], json_message))
         # else:
-        #     self.logger.debug("[no-method] {}".format(message))
+        #     self.logger.debug("[no-method] {}".format(json_message))
 
 
 class Chrome:
@@ -246,7 +253,8 @@ class Chrome:
                 "--window-size=1100,900", "--no-default-browser-check",
                 "--disable-first-run-ui", "--no-first-run",
                 "--homepage=about:blank", "--disable-direct-npapi-requests",
-                "--disable-web-security",
+                "--disable-web-security", "--disable-notifications",
+                "--disable-save-password-bubble",
                 "about:blank"]
         self.logger.info("running {}".format(chrome_args))
         self.chrome_process = subprocess.Popen(chrome_args, env=new_env, start_new_session=True)
