@@ -105,22 +105,10 @@ if __name__ == "__main__":
     except BaseException as e:
         logging.fatal(e, exc_info=sys.exc_info())
     finally:
-        try:
-            controller.shutdown()
-            for th in threading.enumerate():
-                if th != threading.current_thread():
-                    th.join()
-        except BaseException as e:
-            logging.warn("caught exception {}".format(e))
-            for i in range(6,0,-1):
-                controller.shutdown_now()
-                try:
-                    for th in threading.enumerate():
-                        if th != threading.current_thread():
-                            th.join()
-                    break # if we get here, we're done, all threads finished
-                except:
-                    logging.warn("caught exception {}".format(e))
+        controller.shutdown_now()
+        for th in threading.enumerate():
+            if th != threading.current_thread():
+                th.join()
 
     logging.info("all finished, exiting")
 
