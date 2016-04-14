@@ -27,6 +27,12 @@ behaviors:
    url_regex: '^https?://(?:www\.)?instagram\.com/.*$'
    behavior_js: instagram.js
    request_idle_timeout_sec: 10
+ - # ARI-4838 racineco.com document viewers
+   url_regex: '^https?://(?:www\.)?racineco\.com/.*$'
+   behavior_js_template: simpleclicks.js.template
+   default_parameters:
+      click_css_selector: td#NavtwocolUserControl11_NavMeeting_item_1_cell,  td#NavtwocolUserControl11_NavMeeting_item_2_cell,  td#NavtwocolUserControl11_NavMeeting_item_3_cell,  td#NavtwocolUserControl11_NavMeeting_item_4_cell,  td#NavtwocolUserControl11_NavMeeting_item_5_cell,  td#NavtwocolUserControl11_NavMeeting_item_6_cell,  td#NavtwocolUserControl11_NavMeeting_item_7_cell
+   request_idle_timeout_sec: 10
  -
    url_regex: '^https?://(?:www\.)?brooklynmuseum\.org/exhibitions/.*$'
    behavior_js_template: simpleclicks.js.template
