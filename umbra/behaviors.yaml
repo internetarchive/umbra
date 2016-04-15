@@ -27,6 +27,12 @@ behaviors:
    url_regex: '^https?://(?:www\.)?instagram\.com/.*$'
    behavior_js: instagram.js
    request_idle_timeout_sec: 10
+ - # ARI-4826 whitney.org calendar WIP
+   url_regex: '^https?://whitney\.org/Events.*$'
+   behavior_js_template: simpleclicks.js.template
+   default_parameters:
+      click_css_selector: a[class='calendar-widget-day']
+   request_idle_timeout_sec: 10
  -
    url_regex: '^https?://(?:www\.)?brooklynmuseum\.org/exhibitions/.*$'
    behavior_js_template: simpleclicks.js.template
