@@ -6,7 +6,8 @@ import time
 import threading
 import kombu
 import socket
-from umbra.browser import BrowserPool, BrowsingException
+from brozzler.browser import BrowserPool, BrowsingException
+import brozzler
 
 class AmqpBrowserController:
     """
@@ -135,7 +136,7 @@ class AmqpBrowserController:
                         self._browser_pool.release(browser)
                         break
 
-            except KeyError:
+            except brozzler.browser.NoBrowsersAvailable:
                 # no browsers available
                 time.sleep(0.5)
             except:
