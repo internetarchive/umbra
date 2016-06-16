@@ -3,7 +3,7 @@ import glob
 
 setuptools.setup(
         name='umbra',
-        version='2.0.dev1',
+        version='2.0.dev2',
         description='Browser automation via chrome debug protocol',
         url='https://github.com/internetarchive/umbra',
         author='Eldon Stegall',
@@ -11,7 +11,7 @@ setuptools.setup(
         long_description=open('README.md').read(),
         license='Apache License 2.0',
         packages=['umbra'],
-        install_requires=['brozzler>=1.1.dev8', 'kombu>=3.0.21', 'PyYAML'],
+        install_requires=['brozzler>=1.1b1', 'kombu>=3.0.21', 'PyYAML'],
         scripts=glob.glob('bin/*'),
         zip_safe=False,
         classifiers=[
