@@ -22,7 +22,7 @@ arg_parser.add_argument('-i', '--client-id', dest='client_id', default='load_url
 arg_parser.add_argument('-v', '--verbose', dest='log_level',
         action="store_const", default=logging.INFO, const=logging.DEBUG)
 arg_parser.add_argument('--version', action='version',
-        version="umbra {} - {}".format(umbra.version, os.path.basename(__file__)))
+        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)))
 arg_parser.add_argument('urls', metavar='URL', nargs='+', help='URLs to send to umbra')
 args = arg_parser.parse_args(args=sys.argv[1:])
 
