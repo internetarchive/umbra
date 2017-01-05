@@ -6,6 +6,7 @@ import sys
 import logging
 import umbra
 import json
+import brozzler.cli
 
 arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
         description='browse-url - open urls in chrome/chromium and run behaviors',
@@ -13,9 +14,16 @@ arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
 arg_parser.add_argument('urls', metavar='URL', nargs='+', help='URL(s) to browse')
 arg_parser.add_argument('--behavior-parameters', dest='behavior_parameters',
         default=None, help='json blob of parameters to use populate the javascript behavior template, e.g. {"parameter_username":"x","parameter_password":"y"}')
+arg_parser.add_argument(
+        '--username', dest='username', default=None,
+        help='use this username to try to log in if a login form is found')
+arg_parser.add_argument(
+        '--password', dest='password', default=None,
+        help='use this password to try to log in if a login form is found')
 arg_parser.add_argument('-w', '--browser-wait', dest='browser_wait', default='60',
         help='seconds to wait for browser initialization')
-arg_parser.add_argument('-e', '--executable', dest='chrome_exe', default='chromium-browser',
+arg_parser.add_argument('-e', '--executable', dest='chrome_exe',
+        default=brozzler.cli.suggest_default_chrome_exe(),
         help='executable to use to invoke chrome')
 arg_parser.add_argument('-v', '--verbose', dest='log_level',
         action="store_const", default=logging.INFO, const=logging.DEBUG)
@@ -32,5 +40,7 @@ if args.behavior_parameters is not None:
 
 with umbra.Browser(chrome_exe=args.chrome_exe) as browser:
     for url in args.urls:
-        browser.browse_page(url, behavior_parameters=behavior_parameters)
+        browser.browse_page(
+                url, behavior_parameters=behavior_parameters,
+                username=args.username, password=args.password)
 

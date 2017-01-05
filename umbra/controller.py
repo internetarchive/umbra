@@ -84,8 +84,13 @@ class AmqpBrowserController:
         self._consumer_thread.join()
 
     def shutdown_now(self):
+        self.logger.info("shutting down amqp consumer %s", self.amqp_url)
         self._consumer_stop.set()
-        self._browser_pool.shutdown_now()
+        with self._browsing_threads_lock:
+            for th in self._browsing_threads:
+                if th.is_alive():
+                    brozzler.thread_raise(th, brozzler.ShutdownRequested)
+        # self._browser_pool.shutdown_now()
         self._consumer_thread.join()
 
     def reconnect(self, *args, **kwargs):
@@ -108,6 +113,8 @@ class AmqpBrowserController:
                         url = body['url']
                         metadata = body.get('metadata')
                         behavior_parameters = body.get('behaviorParameters')
+                        username = body.get('username')
+                        password = body.get('password')
                     except:
                         self.logger.error("unable to decipher message %s",
                                           message, exc_info=True)
@@ -116,8 +123,9 @@ class AmqpBrowserController:
                         browser.stop()
                         self._browser_pool.release(browser)
                         return
-                    self._start_browsing_page(browser, message, client_id, url,
-                                              metadata, behavior_parameters)
+                    self._start_browsing_page(
+                            browser, message, client_id, url, metadata,
+                            behavior_parameters, username, password)
 
                 consumer.callbacks = [callback]
 
@@ -182,7 +190,9 @@ class AmqpBrowserController:
                 time.sleep(0.5)
                 self.logger.error("attempting to reopen amqp connection")
 
-    def _start_browsing_page(self, browser, message, client_id, url, parent_url_metadata, behavior_parameters):
+    def _start_browsing_page(
+            self, browser, message, client_id, url, parent_url_metadata,
+            behavior_parameters=None, username=None, password=None):
         def on_response(chrome_msg):
             if (chrome_msg['params']['response']['url'].lower().startswith('data:')
                     or chrome_msg['params']['response']['fromDiskCache']
@@ -220,9 +230,14 @@ class AmqpBrowserController:
                     'browser=%s client_id=%s url=%s behavior_parameters=%s',
                     browser, client_id, url, behavior_parameters)
             try:
-                browser.browse_page(url, on_response=on_response,
-                                    behavior_parameters=behavior_parameters)
+                browser.browse_page(
+                        url, on_response=on_response,
+                        behavior_parameters=behavior_parameters,
+                        username=username, password=password)
                 message.ack()
+            except brozzler.ShutdownRequested as e:
+                self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
+                message.requeue()
             except BrowsingException as e:
                 self.logger.warn("browsing did not complete normally, requeuing url {} - {}".format(url, e))
                 message.requeue()
@@ -235,14 +250,18 @@ class AmqpBrowserController:
 
         def browse_thread_run_then_cleanup():
             browse_page_sync()
+            self.logger.info(
+                    'removing thread %s from self._browsing_threads',
+                    threading.current_thread())
             with self._browsing_threads_lock:
                 self._browsing_threads.remove(threading.current_thread())
 
         import random
-        thread_name = "BrowsingThread{}-{}".format(browser.chrome_port,
+        thread_name = "BrowsingThread{}-{}".format(browser.chrome.port,
                 ''.join((random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for _ in range(6))))
-        th = threading.Thread(target=browse_thread_run_then_cleanup, name=thread_name)
+        self.logger.info('adding thread %s to self._browsing_threads', th)
         with self._browsing_threads_lock:
             self._browsing_threads.add(th)
+        th = threading.Thread(target=browse_thread_run_then_cleanup, name=thread_name)
         th.start()
 
