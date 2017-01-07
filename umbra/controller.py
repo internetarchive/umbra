@@ -259,9 +259,9 @@ class AmqpBrowserController:
         import random
         thread_name = "BrowsingThread{}-{}".format(browser.chrome.port,
                 ''.join((random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for _ in range(6))))
+        th = threading.Thread(target=browse_thread_run_then_cleanup, name=thread_name)
         self.logger.info('adding thread %s to self._browsing_threads', th)
         with self._browsing_threads_lock:
             self._browsing_threads.add(th)
-        th = threading.Thread(target=browse_thread_run_then_cleanup, name=thread_name)
         th.start()
 
