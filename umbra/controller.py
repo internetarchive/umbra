@@ -49,7 +49,7 @@ class AmqpBrowserController:
     logger = logging.getLogger(__module__ + "." + __qualname__)
 
     def __init__(self, amqp_url='amqp://guest:guest@localhost:5672/%2f',
-            chrome_exe='chromium-browser', max_active_browsers=1, 
+            chrome_exe='chromium-browser', max_active_browsers=1,
             queue_name='urls', exchange_name='umbra', routing_key='urls'):
         self.amqp_url = amqp_url
         self.queue_name = queue_name
@@ -100,7 +100,6 @@ class AmqpBrowserController:
     def _wait_for_and_browse_urls(self, conn, consumer, timeout):
         start = time.time()
         browser = None
-        consumer.qos(prefetch_count=self.max_active_browsers)
 
         while not self._consumer_stop.is_set() and time.time() - start < timeout and not self._reconnect_requested:
             try:
@@ -178,8 +177,11 @@ class AmqpBrowserController:
                 self.logger.info("connecting to amqp exchange={} at {}".format(self._exchange.name, self.amqp_url))
                 self._reconnect_requested = False
                 with kombu.Connection(self.amqp_url) as conn:
+                    conn.default_channel.basic_qos(
+                            prefetch_count=1, prefetch_size=0, a_global=False)
                     with conn.Consumer(url_queue) as consumer:
-                        self._wait_for_and_browse_urls(conn, consumer, timeout=RECONNECT_AFTER_SECONDS)
+                        self._wait_for_and_browse_urls(
+                                conn, consumer, timeout=RECONNECT_AFTER_SECONDS)
 
                     # need to wait for browsers to finish here, before closing
                     # the amqp connection,  because they use it to do

@@ -3,7 +3,7 @@ import glob
 
 setuptools.setup(
         name='umbra',
-        version='2.0.dev5',
+        version='2.0.dev6',
         description='Browser automation via chrome debug protocol',
         url='https://github.com/internetarchive/umbra',
         author='Eldon Stegall',
