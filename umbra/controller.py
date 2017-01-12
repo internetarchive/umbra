@@ -178,7 +178,8 @@ class AmqpBrowserController:
                 self._reconnect_requested = False
                 with kombu.Connection(self.amqp_url) as conn:
                     conn.default_channel.basic_qos(
-                            prefetch_count=1, prefetch_size=0, a_global=False)
+                            prefetch_count=self.max_active_browsers,
+                            prefetch_size=0, a_global=False)
                     with conn.Consumer(url_queue) as consumer:
                         self._wait_for_and_browse_urls(
                                 conn, consumer, timeout=RECONNECT_AFTER_SECONDS)
