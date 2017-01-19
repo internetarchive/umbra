@@ -57,7 +57,9 @@ class AmqpBrowserController:
         self.routing_key = routing_key
         self.max_active_browsers = max_active_browsers
 
-        self._browser_pool = BrowserPool(size=max_active_browsers, chrome_exe=chrome_exe)
+        self._browser_pool = BrowserPool(
+                size=max_active_browsers, chrome_exe=chrome_exe,
+                ignore_cert_errors=True)
 
     def start(self):
         self._browsing_threads = set()
