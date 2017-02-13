@@ -106,7 +106,6 @@ class AmqpBrowserController:
         while not self._consumer_stop.is_set() and time.time() - start < timeout and not self._reconnect_requested:
             try:
                 browser = self._browser_pool.acquire() # raises KeyError if none available
-                browser.start()
 
                 def callback(body, message):
                     try:
@@ -121,7 +120,6 @@ class AmqpBrowserController:
                                           message, exc_info=True)
                         self.logger.error("discarding bad message")
                         message.reject()
-                        browser.stop()
                         self._browser_pool.release(browser)
                         return
                     self._start_browsing_page(
@@ -141,7 +139,6 @@ class AmqpBrowserController:
                         self._reconnect_requested = True
 
                     if self._consumer_stop.is_set() or time.time() - start >= timeout or self._reconnect_requested:
-                        browser.stop()
                         self._browser_pool.release(browser)
                         break
 
@@ -235,6 +232,7 @@ class AmqpBrowserController:
                     'browser=%s client_id=%s url=%s behavior_parameters=%s',
                     browser, client_id, url, behavior_parameters)
             try:
+                browser.start()
                 browser.browse_page(
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
@@ -262,8 +260,7 @@ class AmqpBrowserController:
                 self._browsing_threads.remove(threading.current_thread())
 
         import random
-        thread_name = "BrowsingThread{}-{}".format(browser.chrome.port,
-                ''.join((random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for _ in range(6))))
+        thread_name = "BrowsingThread:%s" % browser.chrome.port
         th = threading.Thread(target=browse_thread_run_then_cleanup, name=thread_name)
         self.logger.info('adding thread %s to self._browsing_threads', th)
         with self._browsing_threads_lock:
