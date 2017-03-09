@@ -76,10 +76,6 @@ if __name__ == "__main__":
             state_strs.append("{} (in use):".format(b))
             state_strs.append(browserdump_str(pp, b))
             state_strs.append("")
-        for b in controller._browser_pool._available:
-            state_strs.append("{} (not in use):".format(b))
-            state_strs.append(browserdump_str(pp, b))
-            state_strs.append("")
 
         logging.warn("dumping state (caught signal {})\n{}".format(signum, "\n".join(state_strs)))
 
