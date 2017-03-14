@@ -259,7 +259,6 @@ class AmqpBrowserController:
             with self._browsing_threads_lock:
                 self._browsing_threads.remove(threading.current_thread())
 
-        import random
         thread_name = "BrowsingThread:%s" % browser.chrome.port
         th = threading.Thread(target=browse_thread_run_then_cleanup, name=thread_name)
         self.logger.info('adding thread %s to self._browsing_threads', th)
