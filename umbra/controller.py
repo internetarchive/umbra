@@ -229,16 +229,33 @@ class AmqpBrowserController:
                                                      self._producer.publish)
                 publish(payload, exchange=self._exchange, routing_key=client_id)
 
+        def post_outlinks(outlinks=None):
+            for link in outlinks:
+                 payload = {
+                    'url': link,
+                    'method': 'GET',
+                    'parentUrl': url,
+                    'parentUrlMetadata': parent_url_metadata,
+                }
+                 self.logger.debug(
+                            'sending to amqp exchange=%s routing_key=%s payload=%s',
+                            self.exchange_name, client_id, payload)
+                 with self._producer_lock:
+                     publish = self._producer_conn.ensure(self._producer,
+                                                          self._producer.publish)
+                     publish(payload, exchange=self._exchange, routing_key=client_id)
+
         def browse_page_sync():
             self.logger.info(
                     'browser=%s client_id=%s url=%s behavior_parameters=%s',
                     browser, client_id, url, behavior_parameters)
             try:
                 browser.start()
-                browser.browse_page(
+                final_page_url, outlinks = browser.browse_page(
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password)
+                post_outlinks(outlinks)
                 message.ack()
             except brozzler.ShutdownRequested as e:
                 self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
