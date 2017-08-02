@@ -1,13 +1,15 @@
 #!/usr/bin/python3.4
 # vim: set sw=4 et:
 
+import argparse
+import json
+import logging
 import os
 import sys
-import argparse
-import logging
-import umbra
-import json
+
 from kombu import Connection, Exchange, Queue
+
+import umbra
 
 arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
         description='queue-json - send json message to umbra via AMQP',
