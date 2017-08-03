@@ -231,7 +231,7 @@ class AmqpBrowserController:
             for link in outlinks:
                  payload = {
                     'url': link,
-                    'headers': 'GET',
+                    'method': 'GET',
                     'parentUrl': url,
                     'parentUrlMetadata': parent_url_metadata,
                 }
