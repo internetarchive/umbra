@@ -233,7 +233,7 @@ class AmqpBrowserController:
                  #+ in Heritrix.
                  payload = {
                     'url': link,
-                    'headers': '',
+                    'headers': {},
                     'parentUrl': url,
                     'parentUrlMetadata': parent_url_metadata,
                     'method': 'GET',
