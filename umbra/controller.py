@@ -229,12 +229,15 @@ class AmqpBrowserController:
 
         def post_outlinks(outlinks=None):
             for link in outlinks:
+                 #  Each of these payload fields are required by AMQPUrlReceiver.java
+                 #+ in Heritrix.
                  payload = {
                     'url': link,
-                    'method': 'GET',
+                    'headers': '',
                     'parentUrl': url,
                     'parentUrlMetadata': parent_url_metadata,
-                }
+                    'method': 'GET',
+                 }
                  self.logger.debug(
                             'sending to amqp exchange=%s routing_key=%s payload=%s',
                             self.exchange_name, client_id, payload)
