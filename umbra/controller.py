@@ -258,6 +258,7 @@ class AmqpBrowserController:
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password)
+                self.logger.info('Outlinks Found:\n\t%s', '\n\t'.join(sorted(outlinks)))
                 post_outlinks(outlinks)
                 message.ack()
             except brozzler.ShutdownRequested as e:
