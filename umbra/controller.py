@@ -239,7 +239,7 @@ class AmqpBrowserController:
                     'method': 'GET',
                  }
                  self.logger.debug(
-                            'sending to amqp exchange=%s routing_key=%s payload=%s',
+                            'sending outlink to amqp exchange=%s routing_key=%s payload=%s',
                             self.exchange_name, client_id, payload)
                  with self._producer_lock:
                      publish = self._producer_conn.ensure(self._producer,
@@ -256,6 +256,7 @@ class AmqpBrowserController:
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password)
+                self.logger.info('Outlinks Found:\n\t%s', '\n\t'.join(sorted(outlinks)))
                 post_outlinks(outlinks)
                 message.ack()
             except brozzler.ShutdownRequested as e:
