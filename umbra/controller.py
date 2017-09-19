@@ -228,6 +228,35 @@ class AmqpBrowserController:
                 publish(payload, exchange=self._exchange, routing_key=client_id)
 
         def post_outlinks(outlinks=None):
+            def prune_outlinks(dirty_links, block_list=None):
+                '''
+                Remove URL fragments, javascript URLs, and any other designated URLs from the list.
+                '''
+                links = set()
+                dirty_links = set(dirty_links)
+
+                logger.info('Pruning link fragements...')
+                for link in dirty_links:
+                    # remove link fragments
+                    link = urlcanon.parse_url(link)
+                    urlcanon.canon.remove_fragment(link)
+                    link = str(link).strip()
+
+                    # we can't crawl javascript URLs
+                    if not link.startswith('javascript'):
+                        links.add(link)
+                    else:
+                        logger.info('Removing script link: ' + link)
+                logger.info('Pruning complete.')
+
+                logger.info('Removing Links: %s', ', '.join(block_list))
+                # Need to remove after link fragments have been removed to prevent duplication.
+                links = links.difference(block_list)
+
+                return links
+
+            outlinks = prune_outlinks(outlinks, {url})
+
             for link in outlinks:
                  #  Each of these payload fields are required by AMQPUrlReceiver.java
                  #+ in Heritrix.
