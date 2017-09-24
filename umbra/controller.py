@@ -235,7 +235,7 @@ class AmqpBrowserController:
                 links = set()
                 dirty_links = set(dirty_links)
 
-                logger.info('Pruning link fragements...')
+                self.logger.info('Pruning link fragements...')
                 for link in dirty_links:
                     # remove link fragments
                     link = urlcanon.parse_url(link)
@@ -246,10 +246,10 @@ class AmqpBrowserController:
                     if not link.startswith('javascript'):
                         links.add(link)
                     else:
-                        logger.info('Removing script link: ' + link)
-                logger.info('Pruning complete.')
+                        self.logger.info('Removing script link: ' + link)
+                self.logger.info('Pruning complete.')
 
-                logger.info('Removing Links: %s', ', '.join(block_list))
+                self.logger.info('Removing Links: %s', ', '.join(block_list))
                 # Need to remove after link fragments have been removed to prevent duplication.
                 links = links.difference(block_list)
 
