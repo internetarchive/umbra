@@ -8,6 +8,7 @@ import kombu
 import socket
 from brozzler.browser import BrowserPool, BrowsingException
 import brozzler
+import urlcanon
 
 class AmqpBrowserController:
     """
