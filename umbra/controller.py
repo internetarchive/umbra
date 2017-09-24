@@ -260,6 +260,8 @@ class AmqpBrowserController:
 
             outlinks = prune_outlinks(outlinks, {url})
 
+            self.logger.info('Posting Outlinks:\n\t%s', '\n\t'.join(sorted(outlinks)))
+
             for link in outlinks:
                  #  Each of these payload fields are required by AMQPUrlReceiver.java
                  #+ in Heritrix.
@@ -288,7 +290,6 @@ class AmqpBrowserController:
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password)
-                self.logger.info('Outlinks Found:\n\t%s', '\n\t'.join(sorted(outlinks)))
                 post_outlinks(outlinks)
                 message.ack()
             except brozzler.ShutdownRequested as e:
