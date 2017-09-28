@@ -121,6 +121,7 @@ class AmqpBrowserController:
                                           message, exc_info=True)
                         self.logger.error("discarding bad message")
                         message.reject()
+                        browser.stop()
                         self._browser_pool.release(browser)
                         return
                     self._start_browsing_page(
@@ -140,6 +141,7 @@ class AmqpBrowserController:
                         self._reconnect_requested = True
 
                     if self._consumer_stop.is_set() or time.time() - start >= timeout or self._reconnect_requested:
+                        browser.stop()
                         self._browser_pool.release(browser)
                         break
 
@@ -231,27 +233,24 @@ class AmqpBrowserController:
         def post_outlinks(outlinks=None):
             def prune_outlinks(dirty_links, block_list=None):
                 '''
-                Remove URL fragments, javascript URLs, and any other designated URLs from the list.
+                Filter for valid schemes, remove URL fragments, and drop any other designated URLs from the list.
                 '''
                 links = set()
                 dirty_links = set(dirty_links)
 
-                self.logger.info('Pruning link fragements...')
+                self.logger.info('Pruning links...')
                 for link in dirty_links:
-                    # remove link fragments
                     link = urlcanon.parse_url(link)
-                    urlcanon.canon.remove_fragment(link)
 
                     if link.scheme in (b'http', b'https', b'ftp'):
+                        urlcanon.canon.remove_fragment(link)
                         link = str(link).strip()
                         links.add(link)
-                    else:
-                        self.logger.info('Removing script link: ' + link)
+
                 self.logger.info('Pruning complete.')
 
-                self.logger.info('Removing Links: %s', ', '.join(block_list))
-
                 # Need to remove after link fragments have been removed to prevent duplication.
+                self.logger.info('Removing Links: %s', ', '.join(block_list))
                 links = links.difference(block_list)
 
                 return links
