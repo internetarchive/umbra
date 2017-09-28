@@ -243,16 +243,16 @@ class AmqpBrowserController:
                     # remove link fragments
                     link = urlcanon.parse_url(link)
                     urlcanon.canon.remove_fragment(link)
-                    link = str(link).strip()
 
-                    # we can't crawl javascript URLs
-                    if not link.startswith('javascript'):
+                    if link.scheme in (b'http', b'https', b'ftp'):
+                        link = str(link).strip()
                         links.add(link)
                     else:
                         self.logger.info('Removing script link: ' + link)
                 self.logger.info('Pruning complete.')
 
                 self.logger.info('Removing Links: %s', ', '.join(block_list))
+
                 # Need to remove after link fragments have been removed to prevent duplication.
                 links = links.difference(block_list)
 
