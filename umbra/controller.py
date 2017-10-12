@@ -8,6 +8,7 @@ import kombu
 import socket
 from brozzler.browser import BrowserPool, BrowsingException
 import brozzler
+import urlcanon
 
 class AmqpBrowserController:
     """
@@ -230,6 +231,34 @@ class AmqpBrowserController:
                 publish(payload, exchange=self._exchange, routing_key=client_id)
 
         def post_outlinks(outlinks=None):
+            def prune_outlinks(dirty_links, block_list=None):
+                '''
+                Filter for valid schemes, remove URL fragments, and drop any other designated URLs from the list.
+                '''
+                links = set()
+                dirty_links = set(dirty_links)
+
+                self.logger.info('Pruning links...')
+                for link in dirty_links:
+                    link = urlcanon.parse_url(link)
+
+                    if link.scheme in (b'http', b'https', b'ftp'):
+                        urlcanon.canon.remove_fragment(link)
+                        link = str(link).strip()
+                        links.add(link)
+
+                self.logger.info('Pruning complete.')
+
+                # Need to remove after link fragments have been removed to prevent duplication.
+                self.logger.info('Removing Links: %s', ', '.join(block_list))
+                links = links.difference(block_list)
+
+                return links
+
+            outlinks = prune_outlinks(outlinks, {url})
+
+            self.logger.info('Posting Outlinks:\n\t%s', '\n\t'.join(sorted(outlinks)))
+
             for link in outlinks:
                  #  Each of these payload fields are required by AMQPUrlReceiver.java
                  #+ in Heritrix.
@@ -258,7 +287,6 @@ class AmqpBrowserController:
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password)
-                self.logger.info('Outlinks Found:\n\t%s', '\n\t'.join(sorted(outlinks)))
                 post_outlinks(outlinks)
                 message.ack()
             except brozzler.ShutdownRequested as e:
