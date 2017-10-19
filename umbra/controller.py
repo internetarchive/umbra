@@ -287,7 +287,10 @@ class AmqpBrowserController:
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password)
+
+                # Temporarily commenting out for https://webarchive.jira.com/browse/AITFIVE-1295
                 #post_outlinks(outlinks)
+
                 message.ack()
             except brozzler.ShutdownRequested as e:
                 self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
