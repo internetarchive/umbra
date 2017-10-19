@@ -287,7 +287,7 @@ class AmqpBrowserController:
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password)
-                post_outlinks(outlinks)
+                #post_outlinks(outlinks)
                 message.ack()
             except brozzler.ShutdownRequested as e:
                 self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
