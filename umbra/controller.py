@@ -294,16 +294,24 @@ class AmqpBrowserController:
                 message.ack()
             except brozzler.ShutdownRequested as e:
                 self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
-                message.requeue()
+                message.requeue()  # republish?
             except BrowsingException as e:
                 self.logger.warn("browsing did not complete normally, requeuing url {} - {}".format(url, e))
-                message.requeue()
+                republish_amqp(message)
             except:
                 self.logger.critical("problem browsing page, requeuing url {}, may have lost browser process".format(url), exc_info=True)
-                message.requeue()
+                republish_amqp(message)
             finally:
                 browser.stop()
                 self._browser_pool.release(browser)
+
+        def republish_amqp(self, message):
+            # republish on exception, not requeue!
+            message.ack()
+            with self._producer_lock:
+                publish = self._producer_conn.ensure(self._producer,
+                                                     self._producer.publish)
+                publish(message, exchange=self._exchange, routing_key=self.routing_key)
 
         def browse_thread_run_then_cleanup():
             browse_page_sync()
