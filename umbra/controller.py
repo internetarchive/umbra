@@ -2,6 +2,7 @@
 # vim: set sw=4 et:
 
 import logging
+import json
 import time
 import threading
 import kombu
@@ -311,7 +312,7 @@ class AmqpBrowserController:
             with self._producer_lock:
                 publish = self._producer_conn.ensure(self._producer,
                                                      self._producer.publish)
-                publish(message.body, exchange=self._exchange, routing_key=self.routing_key)
+                publish(json.loads(message.body), exchange=self._exchange, routing_key=self.routing_key)
 
         def browse_thread_run_then_cleanup():
             browse_page_sync()
