@@ -296,11 +296,11 @@ class AmqpBrowserController:
                 self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
                 message.requeue()  # republish?
             except BrowsingException as e:
-                self.logger.warn("browsing did not complete normally, requeuing url {} - {}".format(url, e))
-                republish_amqp(message)
+                self.logger.warn("browsing did not complete normally, republishing url {} - {}".format(url, e))
+                republish_amqp(self, message)
             except:
-                self.logger.critical("problem browsing page, requeuing url {}, may have lost browser process".format(url), exc_info=True)
-                republish_amqp(message)
+                self.logger.critical("problem browsing page, republishing url {}, may have lost browser process".format(url), exc_info=True)
+                republish_amqp(self, message)
             finally:
                 browser.stop()
                 self._browser_pool.release(browser)
