@@ -312,13 +312,12 @@ class AmqpBrowserController:
             payload = json.loads(message.body.decode())
             max_retries = 5
             if 'metadata' in payload:
-                if 'retries' in payload['metadata']:
-                    payload['metadata']['retries'] += 1
-                    if payload['metadata']['retries'] > max_retries:
-                        return
-                else:
+                if not 'retries' in payload['metadata']:
                     payload['metadata']['retries'] = 1
-
+                else:
+                    if payload['metadata']['retries'] >= max_retries:
+                        return
+                    payload['metadata']['retries'] += 1
             self.logger.debug(
                        're-publishing url to amqp exchange=%s routing_key=%s payload=%s',
                        self.exchange_name, self.routing_key, payload)
