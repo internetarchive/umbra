@@ -311,7 +311,7 @@ class AmqpBrowserController:
             with self._producer_lock:
                 publish = self._producer_conn.ensure(self._producer,
                                                      self._producer.publish)
-                publish(message, exchange=self._exchange, routing_key=self.routing_key)
+                publish(message.body, exchange=self._exchange, routing_key=self.routing_key)
 
         def browse_thread_run_then_cleanup():
             browse_page_sync()
