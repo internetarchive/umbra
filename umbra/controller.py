@@ -308,8 +308,11 @@ class AmqpBrowserController:
 
         def republish_amqp(self, message):
             # republish on exception, not requeue!
+            if isinstance(message.body, str):
+                payload = json.loads(message.body)
+            else:
+                payload = json.loads(message.body.decode())
             message.ack()
-            payload = json.loads(message.body.decode())
             max_retries = 5
             if 'metadata' in payload:
                 if not 'retries' in payload['metadata']:
