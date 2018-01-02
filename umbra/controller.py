@@ -2,6 +2,7 @@
 # vim: set sw=4 et:
 
 import logging
+import json
 import time
 import threading
 import kombu
@@ -294,16 +295,36 @@ class AmqpBrowserController:
                 message.ack()
             except brozzler.ShutdownRequested as e:
                 self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
-                message.requeue()
+                message.requeue()  # republish?
             except BrowsingException as e:
-                self.logger.warn("browsing did not complete normally, requeuing url {} - {}".format(url, e))
-                message.requeue()
+                self.logger.warn("browsing did not complete normally, republishing url {} - {}".format(url, e))
+                republish_amqp(self, message)
             except:
-                self.logger.critical("problem browsing page, requeuing url {}, may have lost browser process".format(url), exc_info=True)
-                message.requeue()
+                self.logger.critical("problem browsing page, republishing url {}, may have lost browser process".format(url), exc_info=True)
+                republish_amqp(self, message)
             finally:
                 browser.stop()
                 self._browser_pool.release(browser)
+
+        def republish_amqp(self, message):
+            # republish on exception, not requeue!
+            message.ack()
+            payload = json.loads(message.body.decode())
+            max_retries = 5
+            if 'metadata' in payload:
+                if not 'retries' in payload['metadata']:
+                    payload['metadata']['retries'] = 1
+                else:
+                    if payload['metadata']['retries'] >= max_retries:
+                        return
+                    payload['metadata']['retries'] += 1
+            self.logger.debug(
+                       're-publishing url to amqp exchange=%s routing_key=%s payload=%s',
+                       self.exchange_name, self.routing_key, payload)
+            with self._producer_lock:
+                publish = self._producer_conn.ensure(self._producer,
+                                                     self._producer.publish)
+                publish(payload, exchange=self._exchange, routing_key=self.routing_key)
 
         def browse_thread_run_then_cleanup():
             browse_page_sync()
