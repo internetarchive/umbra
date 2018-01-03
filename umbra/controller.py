@@ -308,10 +308,7 @@ class AmqpBrowserController:
 
         def republish_amqp(self, message):
             # republish on exception, not requeue!
-            if isinstance(message.body, str):
-                payload = json.loads(message.body)
-            else:
-                payload = json.loads(message.body.decode())
+            payload = json.loads(to_str(message.body))
             message.ack()
             max_retries = 5
             if 'metadata' in payload:
@@ -328,6 +325,13 @@ class AmqpBrowserController:
                 publish = self._producer_conn.ensure(self._producer,
                                                      self._producer.publish)
                 publish(payload, exchange=self._exchange, routing_key=self.routing_key)
+
+        def to_str(bytes_or_str):
+            if isinstance(bytes_or_str, bytes):
+                value = bytes_or_str.decode() # uses 'utf-8' for encoding
+            else:
+                value = bytes_or_str
+            return value # Instance of str
 
         def browse_thread_run_then_cleanup():
             browse_page_sync()
