@@ -292,6 +292,9 @@ class AmqpBrowserController:
                 #post_outlinks(outlinks)
 
                 message.ack()
+            except brozzler.PageInterstitialShown as e:
+                self.logger.info("page interstitial shown, likely unsupported http auth, for url {} - {}".format(url, e))
+                # skip requeuing url
             except brozzler.ShutdownRequested as e:
                 self.logger.info("browsing did not complete normally, requeuing url {} - {}".format(url, e))
                 message.requeue()
