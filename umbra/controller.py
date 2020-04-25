@@ -201,20 +201,20 @@ class AmqpBrowserController:
             behavior_parameters=None, username=None, password=None):
         def on_response(chrome_msg):
             if (chrome_msg['params']['response']['url'].lower().startswith('data:')
-                    or chrome_msg['params']['response']['fromDiskCache']):
+                    or chrome_msg['params']['response']['fromDiskCache']
+                    or not 'requestHeaders' in chrome_msg['params']['response']):
                 return
 
-            request_headers = chrome_msg['params']['response'].get('requestHeaders', {})
             payload = {
                 'url': chrome_msg['params']['response']['url'],
-                'headers': request_headers,
+                'headers': chrome_msg['params']['response']['requestHeaders'],
                 'parentUrl': url,
                 'parentUrlMetadata': parent_url_metadata,
             }
 
-            if ':method' in request_headers:
+            if ':method' in chrome_msg['params']['response']['requestHeaders']:
                 # happens when http transaction is http 2.0
-                payload['method'] = request_headers[':method']
+                payload['method'] = chrome_msg['params']['response']['requestHeaders'][':method']
             elif 'requestHeadersText' in chrome_msg['params']['response']:
                 req = chrome_msg['params']['response']['requestHeadersText']
                 payload['method'] = req[:req.index(' ')]
