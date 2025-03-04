@@ -1,0 +1,18 @@
+[project]
+name = "umbra"
+authors = [
+  { name="Noah Levitt", email="nlevitt@archive.org" },
+]
+maintainers = [
+  { name="Barbara Miller", email="barbara@archive.org" },
+  { name="Misty De Méo", email="misty@archive.org" },
+]
+description = "Queue-controlled browser automation tool for improving web crawl quality"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dynamic = [ "version", "license", "scripts", "dependencies", "optional-dependencies" ]
