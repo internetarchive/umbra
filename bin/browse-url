@@ -6,7 +6,7 @@ import sys
 import logging
 import umbra
 import json
-import brozzler.cli
+from brozzler import suggest_default_chrome_exe
 
 arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
         description='browse-url - open urls in chrome/chromium and run behaviors',
@@ -23,7 +23,7 @@ arg_parser.add_argument(
 arg_parser.add_argument('-w', '--browser-wait', dest='browser_wait', default='60',
         help='seconds to wait for browser initialization')
 arg_parser.add_argument('-e', '--executable', dest='chrome_exe',
-        default=brozzler.cli.suggest_default_chrome_exe(),
+        default=suggest_default_chrome_exe(),
         help='executable to use to invoke chrome')
 arg_parser.add_argument('-v', '--verbose', dest='log_level',
         action="store_const", default=logging.INFO, const=logging.DEBUG)

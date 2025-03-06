@@ -12,10 +12,7 @@ setuptools.setup(
         license='Apache License 2.0',
         packages=['umbra'],
         install_requires=[
-            'brozzler>=1.1b9.dev201',
-            # yt-dlp and doublethink are optional brozzler dependencies
-            'yt-dlp>=2024.7.25',
-            'doublethink==0.4.10',
+            'brozzler>=1.6.10',
             'kombu>=5.3.3, <6',
             'PyYAML'
         ],
