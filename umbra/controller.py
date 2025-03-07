@@ -10,6 +10,7 @@ import socket
 from brozzler.browser import BrowserPool, BrowsingException
 import brozzler
 import urlcanon
+from umbra.ReleasableBrowserPool import ReleasableBrowserPool
 
 class AmqpBrowserController:
     """
@@ -59,7 +60,7 @@ class AmqpBrowserController:
         self.routing_key = routing_key
         self.max_active_browsers = max_active_browsers
 
-        self._browser_pool = BrowserPool(
+        self._browser_pool = ReleasableBrowserPool(
                 size=max_active_browsers, chrome_exe=chrome_exe,
                 ignore_cert_errors=True)
 
@@ -155,13 +156,23 @@ class AmqpBrowserController:
             finally:
                 consumer.callbacks = None
 
-    def _wait_for_active_browsers(self):
-        self.logger.info("waiting for browsing threads to finish")
+    def _wait_for_active_browsers(self, timeout=0):
+        self.logger.info("waiting (for %d seconds) for browsing threads to finish", timeout)
+        start = time.time()
+
         while True:
             with self._browsing_threads_lock:
                 if len(self._browsing_threads) == 0:
                     break
             time.sleep(0.5)
+
+            if  timeout > 0 and time.time() - start >= timeout:
+                self.logger.info("Timeout %d reached, stopping browsers forcefully", timeout)
+                break
+
+        with self._browsing_threads_lock:
+            self._browser_pool.release_everything()
+
         self.logger.info("active browsing threads finished")
 
     def _consume_amqp(self):
@@ -190,7 +201,7 @@ class AmqpBrowserController:
                     # need to wait for browsers to finish here, before closing
                     # the amqp connection,  because they use it to do
                     # message.ack() after they finish browsing a page
-                    self._wait_for_active_browsers()
+                    self._wait_for_active_browsers(timeout=RECONNECT_AFTER_SECONDS)
             except BaseException as e:
                 self.logger.error("caught exception {}".format(e), exc_info=True)
                 time.sleep(0.5)
