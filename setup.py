@@ -11,7 +11,11 @@ setuptools.setup(
         long_description=open('README.md').read(),
         license='Apache License 2.0',
         packages=['umbra'],
-        install_requires=['brozzler>=1.1b9.dev201', 'kombu==3.0.37', 'PyYAML'],
+        install_requires=[
+            'brozzler>=1.6.10',
+            'kombu>=5.3.3, <6',
+            'PyYAML'
+        ],
         scripts=glob.glob('bin/*'),
         zip_safe=False,
         classifiers=[
