@@ -34,9 +34,17 @@ if __name__ == "__main__":
             action="store_const", default=logging.INFO, const=logging.DEBUG)
     arg_parser.add_argument('--version', action='version',
             version="umbra {}".format(umbra.__version__))
+    arg_parser.add_argument('--log_config_file', dest='log_config_file', default=None,
+            help='the path to the log config')
+
     args = arg_parser.parse_args(args=sys.argv[1:])
 
-    logging.basicConfig(stream=sys.stdout, level=args.log_level,
+    if (args.log_config_file is not None):
+        print(os.path.abspath(args.log_config_file))
+        import logging.config
+        logging.config.fileConfig(args.log_config_file)
+    else:
+        logging.basicConfig(stream=sys.stdout, level=args.log_level,
             format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
 
     logging.info("umbra {} starting up".format(umbra.__version__))
