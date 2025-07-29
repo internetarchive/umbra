@@ -2,3 +2,5 @@
 *.diff
 .*.sw*
 /umbra.egg-info/
+/build
+/umbra/build
