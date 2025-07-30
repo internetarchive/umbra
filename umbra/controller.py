@@ -117,7 +117,7 @@ class AmqpBrowserController:
                         behavior_parameters = body.get('behaviorParameters')
                         username = body.get('username')
                         password = body.get('password')
-                    except:
+                    except KeyError:
                         self.logger.error("unable to decipher message %s",
                                           message, exc_info=True)
                         self.logger.error("discarding bad message")
@@ -149,7 +149,7 @@ class AmqpBrowserController:
             except brozzler.browser.NoBrowsersAvailable:
                 # no browsers available
                 time.sleep(0.5)
-            except:
+            except Exception:
                 self.logger.critical("problem with browser initialization", exc_info=True)
                 time.sleep(0.5)
             finally:
@@ -302,7 +302,7 @@ class AmqpBrowserController:
             except BrowsingException as e:
                 self.logger.warn("browsing did not complete normally, republishing url {} - {}".format(url, e))
                 republish_amqp(self, message)
-            except:
+            except Exception:
                 self.logger.critical("problem browsing page, republishing url {}, may have lost browser process".format(url), exc_info=True)
                 republish_amqp(self, message)
             finally:
@@ -315,7 +315,7 @@ class AmqpBrowserController:
             message.ack()
             max_retries = 5
             if 'metadata' in payload:
-                if not 'retries' in payload['metadata']:
+                if 'retries' not in payload['metadata']:
                     payload['metadata']['retries'] = 1
                 else:
                     if payload['metadata']['retries'] >= max_retries:
