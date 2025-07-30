@@ -1,6 +1,8 @@
 [project]
 name = "umbra"
+version = "2.1.dev10"
 authors = [
+  { name = "Eldon Stegall", email="eldon@archive.org" },
   { name="Noah Levitt", email="nlevitt@archive.org" },
 ]
 maintainers = [
@@ -8,11 +10,27 @@ maintainers = [
   { name="Misty De Méo", email="misty@archive.org" },
 ]
 description = "Queue-controlled browser automation tool for improving web crawl quality"
+license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
+    "Environment :: Console",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
+    "Topic :: System :: Archiving",
 ]
-dynamic = [ "version", "license", "scripts", "dependencies", "optional-dependencies" ]
+dependencies = [
+  "brozzler>=1.6.10",
+  "kombu>=5.3.3, <6",
+  "PyYAML"
+]
+
+dynamic = [ "scripts" ]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/internetarchive/umbra"
+Repository = "https://github.com/internetarchive/umbra"
