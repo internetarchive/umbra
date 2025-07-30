@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import sys
+import logging
+import umbra
+import json
+from brozzler import suggest_default_chrome_exe
+
+def browse_url():
+    arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
+            description='browse-url - open urls in chrome/chromium and run behaviors',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    arg_parser.add_argument('urls', metavar='URL', nargs='+', help='URL(s) to browse')
+    arg_parser.add_argument('--behavior-parameters', dest='behavior_parameters',
+            default=None, help='json blob of parameters to use populate the javascript behavior template, e.g. {"parameter_username":"x","parameter_password":"y"}')
+    arg_parser.add_argument(
+            '--username', dest='username', default=None,
+            help='use this username to try to log in if a login form is found')
+    arg_parser.add_argument(
+            '--password', dest='password', default=None,
+            help='use this password to try to log in if a login form is found')
+    arg_parser.add_argument('-w', '--browser-wait', dest='browser_wait', default='60',
+            help='seconds to wait for browser initialization')
+    arg_parser.add_argument('-e', '--executable', dest='chrome_exe',
+            default=suggest_default_chrome_exe(),
+            help='executable to use to invoke chrome')
+    arg_parser.add_argument('-v', '--verbose', dest='log_level',
+            action="store_const", default=logging.INFO, const=logging.DEBUG)
+    arg_parser.add_argument('--version', action='version',
+            version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)))
+    args = arg_parser.parse_args(args=sys.argv[1:])
+
+    logging.basicConfig(stream=sys.stdout, level=args.log_level,
+            format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
+
+    logger = logging.getLogger(__name__)
+
+    behavior_parameters = None
+    if args.behavior_parameters is not None:
+        behavior_parameters = json.loads(args.behavior_parameters)
+
+    with umbra.Browser(chrome_exe=args.chrome_exe) as browser:
+        for url in args.urls:
+            final_page_url, outlinks = browser.browse_page(
+                    url, behavior_parameters=behavior_parameters,
+                    username=args.username, password=args.password)
+            logger.info('Outlinks Found:\n\t%s', '\n\t'.join(outlinks))
+
