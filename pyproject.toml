@@ -28,6 +28,7 @@ dependencies = [
 [project.scripts]
 browse-url = "umbra.cli:browse_url"
 drain-queue = "umbra.cli:drain_queue"
+queue-json = "umbra.cli:queue_json"
 
 [build-system]
 requires = ["setuptools>=61.0"]
