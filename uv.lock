@@ -38,7 +38,7 @@ tzdata = [
 
 [[package]]
 name = "brozzler"
-version = "1.6.10"
+version = "1.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cerberus" },
@@ -55,9 +55,9 @@ dependencies = [
     { name = "urlcanon" },
     { name = "websocket-client" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/46/c9/3f9d3f830ec2c9e83d0fcfd959f49b0011a4ac2994ca9ad00b0281daaf94/brozzler-1.6.10.tar.gz", hash = "sha256:21352657767579f4b2263a6d803b5b36594bb2369face422e1398bf22094edb6", size = 106143, upload-time = "2025-03-12T19:55:52.559Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/49/ecc1d013e7fc54b1eec6a8c0ec53b659e8d29f575733a3566c87ee99cc8a/brozzler-1.7.0.tar.gz", hash = "sha256:3d4f9228a66087a30242bff25e97558e35f34de67b989a098b7b39c83a331503", size = 101059, upload-time = "2025-06-12T17:53:05.753Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/9c/2baa2d77b9b99c1bc6798937be04586435187d97a6c1d763a6c5df18ae40/brozzler-1.6.10-py3-none-any.whl", hash = "sha256:87cfdc173afd19edbf3844f15edc3611dd4fa592edba444bf810328f55dfa7ac", size = 104777, upload-time = "2025-03-12T19:55:50.902Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/16/d5a40f607c5f294005156f781c02035f79d6ac1d32d76e8f0e368a52c50b/brozzler-1.7.0-py3-none-any.whl", hash = "sha256:56502450160219598fb52d67335b35caa6fdf9a4719a20e774b0b4c410dc3b44", size = 97423, upload-time = "2025-06-12T17:53:04.431Z" },
 ]
 
 [[package]]
