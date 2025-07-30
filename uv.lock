@@ -786,6 +786,20 @@ wheels = [
 ]
 
 [[package]]
+name = "sentry-sdk"
+version = "2.34.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3", version = "2.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "urllib3", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/38/10d6bfe23df1bfc65ac2262ed10b45823f47f810b0057d3feeea1ca5c7ed/sentry_sdk-2.34.1.tar.gz", hash = "sha256:69274eb8c5c38562a544c3e9f68b5be0a43be4b697f5fd385bf98e4fbe672687", size = 336969, upload-time = "2025-07-30T11:13:37.93Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/3e/bb34de65a5787f76848a533afbb6610e01fbcdd59e76d8679c254e02255c/sentry_sdk-2.34.1-py2.py3-none-any.whl", hash = "sha256:b7a072e1cdc5abc48101d5146e1ae680fa81fe886d8d95aaa25a0b450c818d32", size = 357743, upload-time = "2025-07-30T11:13:36.145Z" },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -834,6 +848,11 @@ dependencies = [
     { name = "pyyaml" },
 ]
 
+[package.optional-dependencies]
+sentry = [
+    { name = "sentry-sdk" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "ruff" },
@@ -844,7 +863,9 @@ requires-dist = [
     { name = "brozzler", specifier = ">=1.6.10" },
     { name = "kombu", specifier = ">=5.3.3,<6" },
     { name = "pyyaml" },
+    { name = "sentry-sdk", marker = "extra == 'sentry'", specifier = ">=2.34.1" },
 ]
+provides-extras = ["sentry"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.12.7" }]

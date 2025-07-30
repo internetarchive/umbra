@@ -25,6 +25,11 @@ dependencies = [
   "PyYAML"
 ]
 
+[project.optional-dependencies]
+sentry = [
+  "sentry-sdk>=2.34.1"
+]
+
 [project.scripts]
 browse-url = "umbra.cli:browse_url"
 drain-queue = "umbra.cli:drain_queue"
