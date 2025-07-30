@@ -25,7 +25,8 @@ dependencies = [
   "PyYAML"
 ]
 
-dynamic = [ "scripts" ]
+[project.scripts]
+browse-url = "umbra.cli:browse_url"
 
 [build-system]
 requires = ["setuptools>=61.0"]
