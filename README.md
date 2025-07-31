@@ -34,6 +34,10 @@ Umbra also comes with these utilities:
 * queue-url - send url to umbra via AMQP
 * drain-queue - consume messages from AMQP queue
 
+Sentry
+------
+Umbra has optional support for reporting errors to [Sentry](https://sentry.io/welcome/). To use this, install with the `sentry` extra and set the `SENTRY_DSN` environment variable to the [DSN](https://docs.sentry.io/concepts/key-terms/dsn-explainer/) for your deployment.
+
 License
 -------
 
