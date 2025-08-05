@@ -52,12 +52,14 @@ class AmqpBrowserController:
 
     def __init__(self, amqp_url='amqp://guest:guest@localhost:5672/%2f',
             chrome_exe='chromium-browser', max_active_browsers=1,
-            queue_name='urls', exchange_name='umbra', routing_key='urls'):
+            queue_name='urls', exchange_name='umbra', routing_key='urls',
+            user_agent=None):
         self.amqp_url = amqp_url
         self.queue_name = queue_name
         self.exchange_name = exchange_name
         self.routing_key = routing_key
         self.max_active_browsers = max_active_browsers
+        self.user_agent = user_agent
 
         self._browser_pool = BrowserPool(
                 size=max_active_browsers, chrome_exe=chrome_exe,
@@ -287,7 +289,8 @@ class AmqpBrowserController:
                 final_page_url, outlinks = browser.browse_page(
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
-                        username=username, password=password)
+                        username=username, password=password,
+                        user_agent=self.user_agent)
 
                 # Temporarily commenting out for https://webarchive.jira.com/browse/AITFIVE-1295
                 #post_outlinks(outlinks)
