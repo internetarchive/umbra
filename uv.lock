@@ -840,7 +840,7 @@ wheels = [
 
 [[package]]
 name = "umbra"
-version = "2.2"
+version = "2.3"
 source = { editable = "." }
 dependencies = [
     { name = "brozzler" },
