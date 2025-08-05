@@ -33,6 +33,9 @@ def browse_url():
     arg_parser.add_argument('-e', '--executable', dest='chrome_exe',
             default=suggest_default_chrome_exe(),
             help='executable to use to invoke chrome')
+    arg_parser.add_argument('--user-agent', dest='user_agent',
+            default=None,
+            help='user agent to use when browsing')
     arg_parser.add_argument('-v', '--verbose', dest='log_level',
             action="store_const", default=logging.INFO, const=logging.DEBUG)
     arg_parser.add_argument('--version', action='version',
@@ -52,7 +55,8 @@ def browse_url():
         for url in args.urls:
             final_page_url, outlinks = browser.browse_page(
                     url, behavior_parameters=behavior_parameters,
-                    username=args.username, password=args.password)
+                    username=args.username, password=args.password,
+                    user_agent=args.user_agent)
             logger.info('Outlinks Found:\n\t%s', '\n\t'.join(outlinks))
 
 
@@ -181,6 +185,9 @@ def run_umbra():
             help='AMQP routing key to assign to AMQP queue of urls')
     arg_parser.add_argument('-n', '--max-browsers', dest='max_browsers', default='1',
             help='Max number of chrome instances simultaneously browsing pages')
+    arg_parser.add_argument('--user-agent', dest='user_agent',
+            default=None,
+            help='user agent to use when browsing')
     arg_parser.add_argument('-v', '--verbose', dest='log_level',
             action="store_const", default=logging.INFO, const=logging.DEBUG)
     arg_parser.add_argument('--version', action='version',
@@ -195,7 +202,7 @@ def run_umbra():
     controller = umbra.Umbra(args.amqp_url, args.chrome_exe,
             max_active_browsers=int(args.max_browsers),
             exchange_name=args.amqp_exchange, queue_name=args.amqp_queue,
-            routing_key=args.amqp_routing_key)
+            routing_key=args.amqp_routing_key, user_agent=args.user_agent)
 
     def browserdump_str(pp, b):
         x = []
