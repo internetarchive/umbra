@@ -281,6 +281,8 @@ class AmqpBrowserController:
                      publish(payload, exchange=self._exchange, routing_key=client_id)
 
         def browse_page_sync():
+            user_agent = parent_url_metadata.get("userAgent", self.user_agent)
+
             self.logger.info(
                     'browser=%s client_id=%s url=%s behavior_parameters=%s',
                     browser, client_id, url, behavior_parameters)
@@ -290,7 +292,7 @@ class AmqpBrowserController:
                         url, on_response=on_response,
                         behavior_parameters=behavior_parameters,
                         username=username, password=password,
-                        user_agent=self.user_agent)
+                        user_agent=user_agent)
 
                 # Temporarily commenting out for https://webarchive.jira.com/browse/AITFIVE-1295
                 #post_outlinks(outlinks)
