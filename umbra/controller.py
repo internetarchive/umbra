@@ -281,6 +281,8 @@ class AmqpBrowserController:
                      publish(payload, exchange=self._exchange, routing_key=client_id)
 
         def browse_page_sync():
+            if "userAgent" in parent_url_metadata:
+                self.logger.info("Using custom user agent from metadata: %s", parent_url_metadata["userAgent"])
             user_agent = parent_url_metadata.get("userAgent", self.user_agent)
 
             self.logger.info(
