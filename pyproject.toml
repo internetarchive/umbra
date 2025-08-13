@@ -1,6 +1,6 @@
 [project]
 name = "umbra"
-version = "2.3"
+version = "2.4"
 authors = [
   { name = "Eldon Stegall", email="eldon@archive.org" },
   { name="Noah Levitt", email="nlevitt@archive.org" },
