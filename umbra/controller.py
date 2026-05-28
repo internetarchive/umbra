@@ -7,10 +7,13 @@ import time
 import threading
 import kombu
 import socket
+import sdnotify
 from brozzler.browser import BrowserPool, BrowsingException
 import brozzler
 import urlcanon
 
+_sd = sdnotify.SystemdNotifier()
+_WATCHDOG_INTERVAL_SECONDS = 60
 
 class AmqpBrowserController:
     """
@@ -93,6 +96,7 @@ class AmqpBrowserController:
         )
         self._consumer_stop = threading.Event()
         self._consumer_thread.start()
+        _sd.notify("READY=1")
 
     def shutdown(self):
         self.logger.info("shutting down amqp consumer {}".format(self.amqp_url))
@@ -116,6 +120,7 @@ class AmqpBrowserController:
     def _wait_for_and_browse_urls(self, conn, consumer, timeout):
         start = time.time()
         browser = None
+        _last_watchdog_ping = 0
 
         while (
             not self._consumer_stop.is_set()
@@ -154,6 +159,7 @@ class AmqpBrowserController:
                         username,
                         password,
                     )
+                    _sd.notify("WATCHDOG=1")
 
                 consumer.callbacks = [callback]
 
@@ -162,7 +168,10 @@ class AmqpBrowserController:
                         conn.drain_events(timeout=0.5)
                         break  # out of "while True" to acquire another browser
                     except socket.timeout:
-                        pass
+                        now = time.time()
+                        if now - _last_watchdog_ping > _WATCHDOG_INTERVAL_SECONDS:
+                            _last_watchdog_ping = now
+                            _sd.notify("WATCHDOG=1")
                     except socket.error:
                         self.logger.error(
                             "problem consuming messages from AMQP, will try reconnecting after active browsing finishes",
