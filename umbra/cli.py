@@ -15,35 +15,72 @@ import json
 from kombu import Connection, Exchange, Queue
 from brozzler import suggest_default_chrome_exe
 
+
 def browse_url():
-    arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
-            description='browse-url - open urls in chrome/chromium and run behaviors',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    arg_parser.add_argument('urls', metavar='URL', nargs='+', help='URL(s) to browse')
-    arg_parser.add_argument('--behavior-parameters', dest='behavior_parameters',
-            default=None, help='json blob of parameters to use populate the javascript behavior template, e.g. {"parameter_username":"x","parameter_password":"y"}')
+    arg_parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__),
+        description="browse-url - open urls in chrome/chromium and run behaviors",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    arg_parser.add_argument("urls", metavar="URL", nargs="+", help="URL(s) to browse")
     arg_parser.add_argument(
-            '--username', dest='username', default=None,
-            help='use this username to try to log in if a login form is found')
+        "--behavior-parameters",
+        dest="behavior_parameters",
+        default=None,
+        help='json blob of parameters to use populate the javascript behavior template, e.g. {"parameter_username":"x","parameter_password":"y"}',
+    )
     arg_parser.add_argument(
-            '--password', dest='password', default=None,
-            help='use this password to try to log in if a login form is found')
-    arg_parser.add_argument('-w', '--browser-wait', dest='browser_wait', default='60',
-            help='seconds to wait for browser initialization')
-    arg_parser.add_argument('-e', '--executable', dest='chrome_exe',
-            default=suggest_default_chrome_exe(),
-            help='executable to use to invoke chrome')
-    arg_parser.add_argument('--user-agent', dest='user_agent',
-            default=None,
-            help='user agent to use when browsing')
-    arg_parser.add_argument('-v', '--verbose', dest='log_level',
-            action="store_const", default=logging.INFO, const=logging.DEBUG)
-    arg_parser.add_argument('--version', action='version',
-            version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)))
+        "--username",
+        dest="username",
+        default=None,
+        help="use this username to try to log in if a login form is found",
+    )
+    arg_parser.add_argument(
+        "--password",
+        dest="password",
+        default=None,
+        help="use this password to try to log in if a login form is found",
+    )
+    arg_parser.add_argument(
+        "-w",
+        "--browser-wait",
+        dest="browser_wait",
+        default="60",
+        help="seconds to wait for browser initialization",
+    )
+    arg_parser.add_argument(
+        "-e",
+        "--executable",
+        dest="chrome_exe",
+        default=suggest_default_chrome_exe(),
+        help="executable to use to invoke chrome",
+    )
+    arg_parser.add_argument(
+        "--user-agent",
+        dest="user_agent",
+        default=None,
+        help="user agent to use when browsing",
+    )
+    arg_parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        default=logging.INFO,
+        const=logging.DEBUG,
+    )
+    arg_parser.add_argument(
+        "--version",
+        action="version",
+        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+    )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
-    logging.basicConfig(stream=sys.stdout, level=args.log_level,
-            format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=args.log_level,
+        format="%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s",
+    )
 
     logger = logging.getLogger(__name__)
 
@@ -54,34 +91,72 @@ def browse_url():
     with umbra.Browser(chrome_exe=args.chrome_exe) as browser:
         for url in args.urls:
             final_page_url, outlinks = browser.browse_page(
-                    url, behavior_parameters=behavior_parameters,
-                    username=args.username, password=args.password,
-                    user_agent=args.user_agent)
-            logger.info('Outlinks Found:\n\t%s', '\n\t'.join(outlinks))
+                url,
+                behavior_parameters=behavior_parameters,
+                username=args.username,
+                password=args.password,
+                user_agent=args.user_agent,
+            )
+            logger.info("Outlinks Found:\n\t%s", "\n\t".join(outlinks))
 
 
 def drain_queue():
-    arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
-            description='drain-queue - consume messages from AMQP queue',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    arg_parser.add_argument('-u', '--url', dest='amqp_url', default='amqp://guest:guest@localhost:5672/%2f',
-            help='URL identifying the AMQP server to talk to')
-    arg_parser.add_argument('--exchange', dest='amqp_exchange', default='umbra',
-            help='AMQP exchange name')
-    arg_parser.add_argument('--queue', dest='amqp_queue', default='urls',
-            help='AMQP queue name')
-    arg_parser.add_argument('-n', '--no-ack', dest='no_ack', action="store_const",
-            default=False, const=True, help="leave messages on the queue (default: remove them from the queue)")
-    arg_parser.add_argument('-r', '--run-forever', dest='run_forever', action="store_const",
-            default=False, const=True, help="run forever, waiting for new messages to appear on the queue (default: exit when all messages in the queue have been consumed)")
-    arg_parser.add_argument('-v', '--verbose', dest='log_level',
-            action="store_const", default=logging.INFO, const=logging.DEBUG)
-    arg_parser.add_argument('--version', action='version',
-            version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)))
+    arg_parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__),
+        description="drain-queue - consume messages from AMQP queue",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    arg_parser.add_argument(
+        "-u",
+        "--url",
+        dest="amqp_url",
+        default="amqp://guest:guest@localhost:5672/%2f",
+        help="URL identifying the AMQP server to talk to",
+    )
+    arg_parser.add_argument(
+        "--exchange", dest="amqp_exchange", default="umbra", help="AMQP exchange name"
+    )
+    arg_parser.add_argument(
+        "--queue", dest="amqp_queue", default="urls", help="AMQP queue name"
+    )
+    arg_parser.add_argument(
+        "-n",
+        "--no-ack",
+        dest="no_ack",
+        action="store_const",
+        default=False,
+        const=True,
+        help="leave messages on the queue (default: remove them from the queue)",
+    )
+    arg_parser.add_argument(
+        "-r",
+        "--run-forever",
+        dest="run_forever",
+        action="store_const",
+        default=False,
+        const=True,
+        help="run forever, waiting for new messages to appear on the queue (default: exit when all messages in the queue have been consumed)",
+    )
+    arg_parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        default=logging.INFO,
+        const=logging.DEBUG,
+    )
+    arg_parser.add_argument(
+        "--version",
+        action="version",
+        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+    )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
-    logging.basicConfig(stream=sys.stderr, level=args.log_level,
-            format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
+    logging.basicConfig(
+        stream=sys.stderr,
+        level=args.log_level,
+        format="%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s",
+    )
 
     def print_and_maybe_ack(body, message):
         # do this instead of print(body) so that output syntax is json, not python
@@ -91,7 +166,7 @@ def drain_queue():
         if not args.no_ack:
             message.ack()
 
-    exchange = Exchange(args.amqp_exchange, 'direct', durable=True)
+    exchange = Exchange(args.amqp_exchange, "direct", durable=True)
     queue = Queue(args.amqp_queue, exchange=exchange)
     try:
         with Connection(args.amqp_url) as conn:
@@ -109,100 +184,210 @@ def drain_queue():
 
 
 def queue_json():
-    arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
-            description='queue-json - send json message to umbra via AMQP',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    arg_parser.add_argument('-u', '--url', dest='amqp_url', default='amqp://guest:guest@localhost:5672/%2f',
-            help='URL identifying the AMQP server to talk to')
-    arg_parser.add_argument('--exchange', dest='amqp_exchange', default='umbra',
-            help='AMQP exchange name')
-    arg_parser.add_argument('--routing-key', dest='amqp_routing_key', default='urls',
-            help='AMQP routing key')
-    arg_parser.add_argument('-v', '--verbose', dest='log_level',
-            action="store_const", default=logging.INFO, const=logging.DEBUG)
-    arg_parser.add_argument('--version', action='version',
-            version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)))
-    arg_parser.add_argument('payload_json', metavar='JSON_PAYLOAD', help='json payload to send to umbra')
+    arg_parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__),
+        description="queue-json - send json message to umbra via AMQP",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    arg_parser.add_argument(
+        "-u",
+        "--url",
+        dest="amqp_url",
+        default="amqp://guest:guest@localhost:5672/%2f",
+        help="URL identifying the AMQP server to talk to",
+    )
+    arg_parser.add_argument(
+        "--exchange", dest="amqp_exchange", default="umbra", help="AMQP exchange name"
+    )
+    arg_parser.add_argument(
+        "--routing-key",
+        dest="amqp_routing_key",
+        default="urls",
+        help="AMQP routing key",
+    )
+    arg_parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        default=logging.INFO,
+        const=logging.DEBUG,
+    )
+    arg_parser.add_argument(
+        "--version",
+        action="version",
+        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+    )
+    arg_parser.add_argument(
+        "payload_json", metavar="JSON_PAYLOAD", help="json payload to send to umbra"
+    )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
-    logging.basicConfig(stream=sys.stdout, level=args.log_level,
-            format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=args.log_level,
+        format="%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s",
+    )
 
     payload = json.loads(args.payload_json)
 
-    exchange = Exchange(args.amqp_exchange, 'direct', durable=True)
+    exchange = Exchange(args.amqp_exchange, "direct", durable=True)
     with Connection(args.amqp_url) as conn:
-        producer = conn.Producer(serializer='json')
-        logging.info("sending to amqp url={} exchange={} routing_key={} -- {}".format(args.amqp_url, args.amqp_exchange, args.amqp_routing_key, payload))
+        producer = conn.Producer(serializer="json")
+        logging.info(
+            "sending to amqp url={} exchange={} routing_key={} -- {}".format(
+                args.amqp_url, args.amqp_exchange, args.amqp_routing_key, payload
+            )
+        )
         producer.publish(payload, routing_key=args.amqp_routing_key, exchange=exchange)
 
 
 def queue_url():
-    arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
-            description='queue-url - send url to umbra via AMQP',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    arg_parser.add_argument('-u', '--url', dest='amqp_url', default='amqp://guest:guest@localhost:5672/%2f',
-            help='URL identifying the AMQP server to talk to')
-    arg_parser.add_argument('--exchange', dest='amqp_exchange', default='umbra',
-            help='AMQP exchange name')
-    arg_parser.add_argument('--routing-key', dest='amqp_routing_key', default='urls',
-            help='AMQP routing key')
-    arg_parser.add_argument('-i', '--client-id', dest='client_id', default='load_url.0',
-            help='client id - included in the json payload with each url; umbra uses this value as the routing key to send requests back to')
-    arg_parser.add_argument('-v', '--verbose', dest='log_level',
-            action="store_const", default=logging.INFO, const=logging.DEBUG)
-    arg_parser.add_argument('--version', action='version',
-            version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)))
-    arg_parser.add_argument('urls', metavar='URL', nargs='+', help='URLs to send to umbra')
+    arg_parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__),
+        description="queue-url - send url to umbra via AMQP",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    arg_parser.add_argument(
+        "-u",
+        "--url",
+        dest="amqp_url",
+        default="amqp://guest:guest@localhost:5672/%2f",
+        help="URL identifying the AMQP server to talk to",
+    )
+    arg_parser.add_argument(
+        "--exchange", dest="amqp_exchange", default="umbra", help="AMQP exchange name"
+    )
+    arg_parser.add_argument(
+        "--routing-key",
+        dest="amqp_routing_key",
+        default="urls",
+        help="AMQP routing key",
+    )
+    arg_parser.add_argument(
+        "-i",
+        "--client-id",
+        dest="client_id",
+        default="load_url.0",
+        help="client id - included in the json payload with each url; umbra uses this value as the routing key to send requests back to",
+    )
+    arg_parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        default=logging.INFO,
+        const=logging.DEBUG,
+    )
+    arg_parser.add_argument(
+        "--version",
+        action="version",
+        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+    )
+    arg_parser.add_argument(
+        "urls", metavar="URL", nargs="+", help="URLs to send to umbra"
+    )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
-    logging.basicConfig(stream=sys.stdout, level=args.log_level,
-            format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=args.log_level,
+        format="%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s",
+    )
 
-    exchange = Exchange(args.amqp_exchange, 'direct', durable=True)
+    exchange = Exchange(args.amqp_exchange, "direct", durable=True)
     with Connection(args.amqp_url) as conn:
-        producer = conn.Producer(serializer='json')
+        producer = conn.Producer(serializer="json")
         for url in args.urls:
-            payload = {'url': url, 'metadata': {}, 'clientId': args.client_id}
-            logging.info("sending to amqp url={} exchange={} routing_key={} -- {}".format(args.amqp_url, args.amqp_exchange, args.amqp_routing_key, payload))
-            producer.publish(payload, routing_key=args.amqp_routing_key, exchange=exchange)
+            payload = {"url": url, "metadata": {}, "clientId": args.client_id}
+            logging.info(
+                "sending to amqp url={} exchange={} routing_key={} -- {}".format(
+                    args.amqp_url, args.amqp_exchange, args.amqp_routing_key, payload
+                )
+            )
+            producer.publish(
+                payload, routing_key=args.amqp_routing_key, exchange=exchange
+            )
 
 
 def run_umbra():
-    arg_parser = argparse.ArgumentParser(prog=os.path.basename(__file__),
-            description='umbra - browser automation tool communicating via AMQP',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    arg_parser.add_argument('-e', '--executable', dest='chrome_exe',
-            default=suggest_default_chrome_exe(),
-            help='Executable to use to invoke chrome')
-    arg_parser.add_argument('-u', '--url', dest='amqp_url', default='amqp://guest:guest@localhost:5672/%2f',
-            help='URL identifying the amqp server to talk to')
-    arg_parser.add_argument('--exchange', dest='amqp_exchange', default='umbra',
-            help='AMQP exchange name')
-    arg_parser.add_argument('--queue', dest='amqp_queue', default='urls',
-            help='AMQP queue to consume urls from')
-    arg_parser.add_argument('--routing-key', dest='amqp_routing_key', default='urls',
-            help='AMQP routing key to assign to AMQP queue of urls')
-    arg_parser.add_argument('-n', '--max-browsers', dest='max_browsers', default='1',
-            help='Max number of chrome instances simultaneously browsing pages')
-    arg_parser.add_argument('--user-agent', dest='user_agent',
-            default=None,
-            help='user agent to use when browsing')
-    arg_parser.add_argument('-v', '--verbose', dest='log_level',
-            action="store_const", default=logging.INFO, const=logging.DEBUG)
-    arg_parser.add_argument('--version', action='version',
-            version="umbra {}".format(umbra.__version__))
+    arg_parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__),
+        description="umbra - browser automation tool communicating via AMQP",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    arg_parser.add_argument(
+        "-e",
+        "--executable",
+        dest="chrome_exe",
+        default=suggest_default_chrome_exe(),
+        help="Executable to use to invoke chrome",
+    )
+    arg_parser.add_argument(
+        "-u",
+        "--url",
+        dest="amqp_url",
+        default="amqp://guest:guest@localhost:5672/%2f",
+        help="URL identifying the amqp server to talk to",
+    )
+    arg_parser.add_argument(
+        "--exchange", dest="amqp_exchange", default="umbra", help="AMQP exchange name"
+    )
+    arg_parser.add_argument(
+        "--queue",
+        dest="amqp_queue",
+        default="urls",
+        help="AMQP queue to consume urls from",
+    )
+    arg_parser.add_argument(
+        "--routing-key",
+        dest="amqp_routing_key",
+        default="urls",
+        help="AMQP routing key to assign to AMQP queue of urls",
+    )
+    arg_parser.add_argument(
+        "-n",
+        "--max-browsers",
+        dest="max_browsers",
+        default="1",
+        help="Max number of chrome instances simultaneously browsing pages",
+    )
+    arg_parser.add_argument(
+        "--user-agent",
+        dest="user_agent",
+        default=None,
+        help="user agent to use when browsing",
+    )
+    arg_parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        default=logging.INFO,
+        const=logging.DEBUG,
+    )
+    arg_parser.add_argument(
+        "--version", action="version", version="umbra {}".format(umbra.__version__)
+    )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
-    logging.basicConfig(stream=sys.stdout, level=args.log_level,
-            format='%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s')
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=args.log_level,
+        format="%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s",
+    )
 
     logging.info("umbra {} starting up".format(umbra.__version__))
 
-    controller = umbra.Umbra(args.amqp_url, args.chrome_exe,
-            max_active_browsers=int(args.max_browsers),
-            exchange_name=args.amqp_exchange, queue_name=args.amqp_queue,
-            routing_key=args.amqp_routing_key, user_agent=args.user_agent)
+    controller = umbra.Umbra(
+        args.amqp_url,
+        args.chrome_exe,
+        max_active_browsers=int(args.max_browsers),
+        exchange_name=args.amqp_exchange,
+        queue_name=args.amqp_queue,
+        routing_key=args.amqp_routing_key,
+        user_agent=args.user_agent,
+    )
 
     def browserdump_str(pp, b):
         x = []
@@ -233,16 +418,18 @@ def run_umbra():
             state_strs.append(browserdump_str(pp, b))
             state_strs.append("")
 
-        logging.warn("dumping state (caught signal {})\n{}".format(signum, "\n".join(state_strs)))
-
+        logging.warn(
+            "dumping state (caught signal {})\n{}".format(signum, "\n".join(state_strs))
+        )
 
     class ShutdownRequested(Exception):
         pass
 
     def sigterm(signum, frame):
-        raise ShutdownRequested('shutdown requested (caught SIGTERM)')
+        raise ShutdownRequested("shutdown requested (caught SIGTERM)")
+
     def sigint(signum, frame):
-        raise ShutdownRequested('shutdown requested (caught SIGINT)')
+        raise ShutdownRequested("shutdown requested (caught SIGINT)")
 
     signal.signal(signal.SIGQUIT, dump_state)
     signal.signal(signal.SIGHUP, controller.reconnect)

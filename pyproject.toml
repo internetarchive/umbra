@@ -22,7 +22,8 @@ classifiers = [
 dependencies = [
   "brozzler>=1.6.10",
   "kombu>=5.3.3, <6",
-  "PyYAML"
+  "PyYAML",
+  "sdnotify>=0.3.2",
 ]
 
 [project.optional-dependencies]
