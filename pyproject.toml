@@ -12,7 +12,7 @@ maintainers = [
 description = "Queue-controlled browser automation tool for improving web crawl quality"
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
     "Environment :: Console",
     "Programming Language :: Python :: 3",
