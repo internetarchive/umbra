@@ -1,19 +1,20 @@
-#!/usr/bin/env python
-
 import argparse
-import os
-import sys
+import json
 import logging
+import os
 import pprint
 import signal
-import socket
+import sys
 import threading
-import traceback
 import time
-import umbra
-import json
-from kombu import Connection, Exchange, Queue
+import traceback
+
 from brozzler import suggest_default_chrome_exe
+from kombu import Connection, Exchange, Queue
+
+import umbra
+
+logger = logging.getLogger(__name__)
 
 
 def browse_url():
@@ -72,7 +73,7 @@ def browse_url():
     arg_parser.add_argument(
         "--version",
         action="version",
-        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+        version=f"umbra {umbra.__version__} - {os.path.basename(__file__)}",
     )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
@@ -82,15 +83,13 @@ def browse_url():
         format="%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s",
     )
 
-    logger = logging.getLogger(__name__)
-
     behavior_parameters = None
     if args.behavior_parameters is not None:
         behavior_parameters = json.loads(args.behavior_parameters)
 
     with umbra.Browser(chrome_exe=args.chrome_exe) as browser:
         for url in args.urls:
-            final_page_url, outlinks = browser.browse_page(
+            _final_page_url, outlinks = browser.browse_page(
                 url,
                 behavior_parameters=behavior_parameters,
                 username=args.username,
@@ -148,7 +147,7 @@ def drain_queue():
     arg_parser.add_argument(
         "--version",
         action="version",
-        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+        version=f"umbra {umbra.__version__} - {os.path.basename(__file__)}",
     )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
@@ -169,18 +168,20 @@ def drain_queue():
     exchange = Exchange(args.amqp_exchange, "direct", durable=True)
     queue = Queue(args.amqp_queue, exchange=exchange)
     try:
-        with Connection(args.amqp_url) as conn:
-            with conn.Consumer(queue, callbacks=[print_and_maybe_ack]) as consumer:
-                consumer.qos(prefetch_count=1)
-                while True:
-                    try:
-                        conn.drain_events(timeout=0.5)
-                    except socket.timeout:
-                        if not args.run_forever:
-                            logging.debug("exiting, no messages left on the queue")
-                            break
+        with (
+            Connection(args.amqp_url) as conn,
+            conn.Consumer(queue, callbacks=[print_and_maybe_ack]) as consumer,
+        ):
+            consumer.qos(prefetch_count=1)
+            while True:
+                try:
+                    conn.drain_events(timeout=0.5)
+                except TimeoutError:
+                    if not args.run_forever:
+                        logger.debug("exiting, no messages left on the queue")
+                        break
     except KeyboardInterrupt:
-        logging.debug("exiting, stopped by user")
+        logger.debug("exiting, stopped by user")
 
 
 def queue_json():
@@ -216,7 +217,7 @@ def queue_json():
     arg_parser.add_argument(
         "--version",
         action="version",
-        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+        version=f"umbra {umbra.__version__} - {os.path.basename(__file__)}",
     )
     arg_parser.add_argument(
         "payload_json", metavar="JSON_PAYLOAD", help="json payload to send to umbra"
@@ -234,10 +235,8 @@ def queue_json():
     exchange = Exchange(args.amqp_exchange, "direct", durable=True)
     with Connection(args.amqp_url) as conn:
         producer = conn.Producer(serializer="json")
-        logging.info(
-            "sending to amqp url={} exchange={} routing_key={} -- {}".format(
-                args.amqp_url, args.amqp_exchange, args.amqp_routing_key, payload
-            )
+        logger.info(
+            f"sending to amqp url={args.amqp_url} exchange={args.amqp_exchange} routing_key={args.amqp_routing_key} -- {payload}"
         )
         producer.publish(payload, routing_key=args.amqp_routing_key, exchange=exchange)
 
@@ -282,7 +281,7 @@ def queue_url():
     arg_parser.add_argument(
         "--version",
         action="version",
-        version="umbra {} - {}".format(umbra.__version__, os.path.basename(__file__)),
+        version=f"umbra {umbra.__version__} - {os.path.basename(__file__)}",
     )
     arg_parser.add_argument(
         "urls", metavar="URL", nargs="+", help="URLs to send to umbra"
@@ -300,10 +299,8 @@ def queue_url():
         producer = conn.Producer(serializer="json")
         for url in args.urls:
             payload = {"url": url, "metadata": {}, "clientId": args.client_id}
-            logging.info(
-                "sending to amqp url={} exchange={} routing_key={} -- {}".format(
-                    args.amqp_url, args.amqp_exchange, args.amqp_routing_key, payload
-                )
+            logger.info(
+                f"sending to amqp url={args.amqp_url} exchange={args.amqp_exchange} routing_key={args.amqp_routing_key} -- {payload}"
             )
             producer.publish(
                 payload, routing_key=args.amqp_routing_key, exchange=exchange
@@ -367,7 +364,7 @@ def run_umbra():
         const=logging.DEBUG,
     )
     arg_parser.add_argument(
-        "--version", action="version", version="umbra {}".format(umbra.__version__)
+        "--version", action="version", version=f"umbra {umbra.__version__}"
     )
     args = arg_parser.parse_args(args=sys.argv[1:])
 
@@ -377,7 +374,7 @@ def run_umbra():
         format="%(asctime)s %(process)d %(levelname)s %(threadName)s %(name)s.%(funcName)s(%(filename)s:%(lineno)d) %(message)s",
     )
 
-    logging.info("umbra {} starting up".format(umbra.__version__))
+    logger.info(f"umbra {umbra.__version__} starting up")
 
     controller = umbra.Umbra(
         args.amqp_url,
@@ -414,11 +411,11 @@ def run_umbra():
         state_strs.append("")
 
         for b in controller._browser_pool._in_use:
-            state_strs.append("{} (in use):".format(b))
+            state_strs.append(f"{b} (in use):")
             state_strs.append(browserdump_str(pp, b))
             state_strs.append("")
 
-        logging.warn(
+        logger.warning(
             "dumping state (caught signal {})\n{}".format(signum, "\n".join(state_strs))
         )
 
@@ -442,12 +439,12 @@ def run_umbra():
         while True:
             time.sleep(0.5)
     except ShutdownRequested as e:
-        logging.info(e)
+        logger.info(e)
     except BaseException as e:
-        logging.fatal(e, exc_info=True)
+        logger.critical(e, exc_info=True)
     finally:
         controller.shutdown_now()
         for th in threading.enumerate():
             if th != threading.current_thread():
                 th.join()
-    logging.info("all finished, exiting")
+    logger.info("all finished, exiting")
