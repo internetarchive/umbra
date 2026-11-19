@@ -7,6 +7,7 @@ Umbra = AmqpBrowserController
 
 try:
     import os
+
     import sentry_sdk
 
     DEPLOYMENT_ENVIRONMENT = os.environ.get("DEPLOYMENT_ENVIRONMENT", "DEV")

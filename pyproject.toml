@@ -5,14 +5,10 @@ authors = [
   { name = "Eldon Stegall", email="eldon@archive.org" },
   { name="Noah Levitt", email="nlevitt@archive.org" },
 ]
-maintainers = [
-  { name="Barbara Miller", email="barbara@archive.org" },
-  { name="Misty De Méo", email="misty@archive.org" },
-]
 description = "Queue-controlled browser automation tool for improving web crawl quality"
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Environment :: Console",
     "Programming Language :: Python :: 3",

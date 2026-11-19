@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # vim: set sw=4 et:
 
-import logging
 import json
-import time
+import logging
 import threading
-import kombu
-import socket
-import sdnotify
-from brozzler.browser import BrowserPool, BrowsingException
+import time
+
 import brozzler
+import kombu
+import sdnotify
 import urlcanon
+from brozzler.browser import BrowserPool, BrowsingException
 
 _sd = sdnotify.SystemdNotifier()
 _WATCHDOG_INTERVAL_SECONDS = 60
+
 
 class AmqpBrowserController:
     """
@@ -99,7 +100,7 @@ class AmqpBrowserController:
         _sd.notify("READY=1")
 
     def shutdown(self):
-        self.logger.info("shutting down amqp consumer {}".format(self.amqp_url))
+        self.logger.info(f"shutting down amqp consumer {self.amqp_url}")
         self._consumer_stop.set()
         self._consumer_thread.join()
 
@@ -132,7 +133,7 @@ class AmqpBrowserController:
                     self._browser_pool.acquire()
                 )  # raises KeyError if none available
 
-                def callback(body, message):
+                def callback(body, message, browser=browser):
                     try:
                         client_id = body.get("clientId")
                         url = body["url"]
@@ -141,9 +142,7 @@ class AmqpBrowserController:
                         username = body.get("username")
                         password = body.get("password")
                     except KeyError:
-                        self.logger.error(
-                            "unable to decipher message %s", message, exc_info=True
-                        )
+                        self.logger.exception("unable to decipher message %s", message)
                         self.logger.error("discarding bad message")
                         message.reject()
                         browser.stop()
@@ -167,15 +166,14 @@ class AmqpBrowserController:
                     try:
                         conn.drain_events(timeout=0.5)
                         break  # out of "while True" to acquire another browser
-                    except socket.timeout:
+                    except TimeoutError:
                         now = time.time()
                         if now - _last_watchdog_ping > _WATCHDOG_INTERVAL_SECONDS:
                             _last_watchdog_ping = now
                             _sd.notify("WATCHDOG=1")
-                    except socket.error:
-                        self.logger.error(
-                            "problem consuming messages from AMQP, will try reconnecting after active browsing finishes",
-                            exc_info=True,
+                    except OSError:
+                        self.logger.exception(
+                            "problem consuming messages from AMQP, will try reconnecting after active browsing finishes"
                         )
                         self._reconnect_requested = True
 
@@ -224,9 +222,7 @@ class AmqpBrowserController:
         while not self._consumer_stop.is_set():
             try:
                 self.logger.info(
-                    "connecting to amqp exchange={} at {}".format(
-                        self._exchange.name, self.amqp_url
-                    )
+                    f"connecting to amqp exchange={self._exchange.name} at {self.amqp_url}"
                 )
                 self._reconnect_requested = False
                 with kombu.Connection(self.amqp_url) as conn:
@@ -244,8 +240,8 @@ class AmqpBrowserController:
                     # the amqp connection,  because they use it to do
                     # message.ack() after they finish browsing a page
                     self._wait_for_active_browsers()
-            except BaseException as e:
-                self.logger.error("caught exception {}".format(e), exc_info=True)
+            except BaseException:
+                self.logger.exception("caught exception")
                 time.sleep(0.5)
                 self.logger.error("attempting to reopen amqp connection")
 
@@ -282,7 +278,7 @@ class AmqpBrowserController:
                 req = chrome_msg["params"]["response"]["requestHeadersText"]
                 payload["method"] = req[: req.index(" ")]
             else:
-                self.logger.warn(
+                self.logger.warning(
                     "unable to identify http method (assuming GET) chrome_msg=%s",
                     chrome_msg,
                 )
@@ -368,7 +364,7 @@ class AmqpBrowserController:
             )
             try:
                 browser.start()
-                final_page_url, outlinks = browser.browse_page(
+                _final_page_url, _outlinks = browser.browse_page(
                     url,
                     on_response=on_response,
                     behavior_parameters=behavior_parameters,
@@ -383,30 +379,22 @@ class AmqpBrowserController:
                 message.ack()
             except brozzler.PageInterstitialShown as e:
                 self.logger.info(
-                    "page interstitial shown, likely unsupported http auth, for url {} - {}".format(
-                        url, e
-                    )
+                    f"page interstitial shown, likely unsupported http auth, for url {url} - {e}"
                 )
                 message.reject()
             except brozzler.ShutdownRequested as e:
                 self.logger.info(
-                    "browsing did not complete normally, requeuing url {} - {}".format(
-                        url, e
-                    )
+                    f"browsing did not complete normally, requeuing url {url} - {e}"
                 )
                 message.requeue()  # republish?
             except BrowsingException as e:
-                self.logger.warn(
-                    "browsing did not complete normally, republishing url {} - {}".format(
-                        url, e
-                    )
+                self.logger.warning(
+                    f"browsing did not complete normally, republishing url {url} - {e}"
                 )
                 republish_amqp(self, message)
             except Exception:
                 self.logger.critical(
-                    "problem browsing page, republishing url {}, may have lost browser process".format(
-                        url
-                    ),
+                    f"problem browsing page, republishing url {url}, may have lost browser process",
                     exc_info=True,
                 )
                 republish_amqp(self, message)
@@ -454,7 +442,7 @@ class AmqpBrowserController:
             with self._browsing_threads_lock:
                 self._browsing_threads.remove(threading.current_thread())
 
-        thread_name = "BrowsingThread:%s" % browser.chrome.port
+        thread_name = f"BrowsingThread:{browser.chrome.port}"
         th = threading.Thread(target=browse_thread_run_then_cleanup, name=thread_name)
         self.logger.info("adding thread %s to self._browsing_threads", th)
         with self._browsing_threads_lock:
